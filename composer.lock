@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "385d58b11d816b21d0484b902310db7e",
+    "hash": "f7bfbee7c62ae8d9603989f156f0f6c3",
     "packages": [
         {
             "name": "ircmaxell/password-compat",
@@ -325,21 +325,21 @@
         },
         {
             "name": "joomla/registry",
-            "version": "1.4.4",
+            "version": "1.4.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/joomla-framework/registry.git",
-                "reference": "730467978ad52677903e973bb33be2306eb161eb"
+                "reference": "4f926ba961ca45eb95076a1598c3ae689cb02fc5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/joomla-framework/registry/zipball/730467978ad52677903e973bb33be2306eb161eb",
-                "reference": "730467978ad52677903e973bb33be2306eb161eb",
+                "url": "https://api.github.com/repos/joomla-framework/registry/zipball/4f926ba961ca45eb95076a1598c3ae689cb02fc5",
+                "reference": "4f926ba961ca45eb95076a1598c3ae689cb02fc5",
                 "shasum": ""
             },
             "require": {
                 "joomla/compat": "~1.0",
-                "joomla/string": "~1.2",
+                "joomla/string": "~1.3",
                 "joomla/utilities": "~1.0",
                 "php": ">=5.3.10"
             },
@@ -375,7 +375,7 @@
                 "joomla",
                 "registry"
             ],
-            "time": "2015-03-16 18:49:29"
+            "time": "2015-03-28 17:54:38"
         },
         {
             "name": "joomla/session",
@@ -424,16 +424,16 @@
         },
         {
             "name": "joomla/string",
-            "version": "1.2.2",
+            "version": "1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/joomla-framework/string.git",
-                "reference": "9f7b27d6b2d48d65b2fe81b5c6d72225629ad692"
+                "reference": "0df8ead8c726a1f648e624d3bcbef8cf05c1d0da"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/joomla-framework/string/zipball/9f7b27d6b2d48d65b2fe81b5c6d72225629ad692",
-                "reference": "9f7b27d6b2d48d65b2fe81b5c6d72225629ad692",
+                "url": "https://api.github.com/repos/joomla-framework/string/zipball/0df8ead8c726a1f648e624d3bcbef8cf05c1d0da",
+                "reference": "0df8ead8c726a1f648e624d3bcbef8cf05c1d0da",
                 "shasum": ""
             },
             "require": {
@@ -467,7 +467,7 @@
                 "joomla",
                 "string"
             ],
-            "time": "2015-03-13 12:29:00"
+            "time": "2015-03-26 01:02:20"
         },
         {
             "name": "joomla/uri",
@@ -508,20 +508,20 @@
         },
         {
             "name": "joomla/utilities",
-            "version": "1.3.2",
+            "version": "1.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/joomla-framework/utilities.git",
-                "reference": "2e7f37a69162fea02059c764a318a920121f8b4a"
+                "reference": "3e43b0806c194a92b58a176b73d6cc2dc6c9c3a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/joomla-framework/utilities/zipball/2e7f37a69162fea02059c764a318a920121f8b4a",
-                "reference": "2e7f37a69162fea02059c764a318a920121f8b4a",
+                "url": "https://api.github.com/repos/joomla-framework/utilities/zipball/3e43b0806c194a92b58a176b73d6cc2dc6c9c3a4",
+                "reference": "3e43b0806c194a92b58a176b73d6cc2dc6c9c3a4",
                 "shasum": ""
             },
             "require": {
-                "joomla/string": "~1.0",
+                "joomla/string": "~1.3",
                 "php": ">=5.3.10"
             },
             "require-dev": {
@@ -551,7 +551,7 @@
                 "joomla",
                 "utilities"
             ],
-            "time": "2015-03-16 18:50:58"
+            "time": "2015-03-28 17:52:43"
         },
         {
             "name": "leafo/lessphp",
