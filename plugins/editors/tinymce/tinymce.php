@@ -630,29 +630,6 @@ class PlgEditorTinymce extends JPlugin
 					$href = null;
 				}
 
-				// Get some icons
-				switch ($icon)
-				{
-					case 'copy':
-						// Page break
-						break;
-					case 'file-add':
-						// Articles
-						$icon = 'newdocument';
-						break;
-					case 'picture':
-						// Images
-						$icon = 'image';
-						break;
-					case 'arrow-down':
-						// Read more
-						$icon = 'pagebreak';
-						break;
-					default:
-						// All others
-						$icon = 'browse';
-				}
-
 				// Get the modal width/height
 				if ($options)
 				{
@@ -1020,6 +997,9 @@ class PlgEditorTinymce extends JPlugin
 		$editor .= JLayoutHelper::render('joomla.tinymce.textarea', $textarea);
 		$editor .= $this->_displayButtons($id, $buttons, $asset, $author);
 		$editor .= '</div>';
+
+		// Add custom buttons font images
+		JFactory::getDocument()->addStyleSheet("/media/jui/css/tinybtns.css");
 
 		return $editor;
 	}
