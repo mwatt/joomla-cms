@@ -60,7 +60,7 @@ class UsersModelUsers extends JModelList
 	 *
 	 * @since   1.6
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'a.name', $direction = 'asc')
 	{
 		$app = JFactory::getApplication('administrator');
 
@@ -109,7 +109,7 @@ class UsersModelUsers extends JModelList
 		$this->setState('params', $params);
 
 		// List state information.
-		parent::populateState('a.name', 'asc');
+		parent::populateState($ordering, $direction);
 	}
 
 	/**

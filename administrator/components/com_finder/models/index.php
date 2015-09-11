@@ -340,7 +340,7 @@ class FinderModelIndex extends JModelList
 	 *
 	 * @since   2.5
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'l.title', $direction = 'asc')
 	{
 		// Load the filter state.
 		$search = $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search');
@@ -357,7 +357,7 @@ class FinderModelIndex extends JModelList
 		$this->setState('params', $params);
 
 		// List state information.
-		parent::populateState('l.title', 'asc');
+		parent::populateState($ordering, $direction);
 	}
 
 	/**
