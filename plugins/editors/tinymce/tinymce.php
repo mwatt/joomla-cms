@@ -1016,8 +1016,8 @@ class PlgEditorTinymce extends JPlugin
 					preg_match('/\s*+(window)/', $options, $matches);
 					if (in_array('window', $matches))
 					{
-						$modalWidth  = '800';
-						$modalHeight = '600';
+						$modalWidth  = 'jQuery(document).width() - 100';
+						$modalHeight = 'jQuery(document).height() - 200';
 					}
 					else
 					{
