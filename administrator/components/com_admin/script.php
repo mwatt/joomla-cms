@@ -37,6 +37,7 @@ class JoomlaInstallerScript
 		$this->clearRadCache();
 		$this->updateAssets();
 		$this->clearStatsCache();
+		$this->updateUtf8Mb4();
 	}
 
 	/**
@@ -1566,5 +1567,94 @@ class JoomlaInstallerScript
 		}
 
 		return true;
+	}
+
+	/**
+	 * Update the database with the correct UTF8MB4 settings.
+	 *
+	 * @return  void.
+	 *
+	 * @since   3.5.0
+	 */
+	private function updateUtf8Mb4()
+	{
+		$db = JFactory::getDbo();
+
+		// Setup the adapter for the indexer.
+		$format = $db->name;
+
+		if ($format == 'mysqli')
+		{
+			$format = 'mysql';
+		}
+
+		if ($format == 'mysql' && version_compare(JVERSION, '3.5.0', 'lt'))
+		{
+			$fileName = JPATH_ADMINISTRATOR . "/components/com_admin/sql/utf8mb4/$format/3.5.0-2015-07-01.sql";
+
+			// Split the queries
+			$fileContents = @file_get_contents($fileName);
+			$queries = $db->splitSql($fileContents);
+
+			// Execute the queries
+			foreach ($queries as $query)
+			{
+				try
+				{
+					if (!$this->serverClaimsUtf8mb4Support($db->name))
+					{
+						$query = str_replace('utf8mb4', 'utf8', $query);
+					}
+
+					$db->setQuery($query)->execute();
+				}
+				catch (RuntimeException $e)
+				{
+					JFactory::getApplication()->enqueueMessage(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $e->getCode(), $e->getMessage()));
+				}
+			}
+		}
+	}
+
+	/**
+	 * Does the database server claim to have support for UTF-8 Multibyte (utf8mb4) collation?
+	 *
+	 * libmysql supports utf8mb4 since 5.5.3 (same version as the MySQL server). mysqlnd supports utf8mb4 since 5.0.9.
+	 *
+	 * @param   string  $format  The type of database connection.
+	 *
+	 * @return  boolean
+	 *
+	 * @since   3.5.0
+	 */
+	private function serverClaimsUtf8mb4Support($format)
+	{
+		switch ($format)
+		{
+			case 'mysql':
+				$client_version = mysql_get_client_info();
+				break;
+			case 'mysqli':
+				$client_version = mysqli_get_client_info();
+				break;
+			default:
+				$client_version = false;
+		}
+
+		if ($client_version)
+		{
+			if (strpos($client_version, 'mysqlnd') !== false)
+			{
+				$client_version = preg_replace('/^\D+([\d.]+).*/', '$1', $client_version);
+
+				return version_compare($client_version, '5.0.9', '>=');
+			}
+			else
+			{
+				return version_compare($client_version, '5.5.3', '>=');
+			}
+		}
+
+		return false;
 	}
 }
