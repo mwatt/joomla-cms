@@ -396,8 +396,7 @@ abstract class JHtmlBehavior
 		$options = JHtml::getJSObject($opt);
 
 		// Attach modal behavior to document
-		$document
-			->addScriptDeclaration(
+		$document->addScriptDeclaration(
 			"
 		jQuery(function($) {
 			SqueezeBox.initialize(" . $options . ");
@@ -406,11 +405,9 @@ abstract class JHtmlBehavior
 			});
 		});
 		function jModalClose() {
-			if (jQuery('.mce-window').length ){
-				tinyMCE.activeEditor.windowManager.close();
-			}
 			SqueezeBox.close();
-		}"
+		}
+			"
 		);
 
 		// Set static array

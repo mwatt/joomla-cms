@@ -9,28 +9,31 @@
 
 defined('_JEXEC') or die;
 
-$script  = 'function insertPagebreak() {' . "\n\t";
+JFactory::getDocument()->addScriptDeclaration(
+		'
+		function insertPagebreak() {
+			var title = document.getElementById("title").value;
 
-// Get the pagebreak title
-$script .= 'var title = document.getElementById("title").value;' . "\n\t";
-$script .= 'if (title != \'\') {' . "\n\t\t";
-$script .= 'title = "title=\""+title+"\" ";' . "\n\t";
-$script .= '}' . "\n\t";
+			if (title != \'\') {
+				title = "title=\""+title+"\" ";
+			}
 
-// Get the pagebreak toc alias -- not inserting for now
-// don't know which attribute to use...
-$script .= 'var alt = document.getElementById("alt").value;' . "\n\t";
-$script .= 'if (alt != \'\') {' . "\n\t\t";
-$script .= 'alt = "alt=\""+alt+"\" ";' . "\n\t";
-$script .= '}' . "\n\t";
-$script .= 'var tag = "<hr class=\"system-pagebreak\" "+title+" "+alt+"/>";' . "\n\t";
-$script .= 'window.parent.jInsertEditorText(tag, ' . json_encode($this->eName) . ');' . "\n\t";
-$script .= 'window.parent.jModalClose();' . "\n\t";
-$script .= 'return false;' . "\n";
-$script .= '}' . "\n";
+			// Get the pagebreak toc alias -- not inserting for now
+			// don\'t know which attribute to use...
+			var alt = document.getElementById("alt").value;
 
-JFactory::getDocument()->addScriptDeclaration($script);
+			if (alt != \'\') {
+				alt = "alt=\""+alt+"\" ";
+			}
+			var tag = "<hr class=\"system-pagebreak\" "+title+" "+alt+"/>";
+			window.parent.jInsertEditorText(tag, ' . json_encode($this->eName) . ');
+			window.parent.jModalClose();
+			return false;
+		}
+		'
+);
 ?>
+<br />
 <form class="form-horizontal">
 
 	<div class="control-group">
@@ -43,6 +46,6 @@ JFactory::getDocument()->addScriptDeclaration($script);
 		<div class="controls"><input type="text" id="alt" name="alt" /></div>
 	</div>
 
-	<button onclick="insertPagebreak();" class="btn btn-primary"><?php echo JText::_('COM_CONTENT_PAGEBREAK_INSERT_BUTTON'); ?></button>
+	<button class="btn btn-success pull-right" onclick="insertPagebreak();"><?php echo JText::_('COM_CONTENT_PAGEBREAK_INSERT_BUTTON'); ?></button>
 
 </form>
