@@ -405,12 +405,7 @@ abstract class JHtmlBehavior
 				parse: 'rel'
 			});
 		});
-		function jModalClose() {
-			if (jQuery('.mce-window').length ){
-				tinyMCE.activeEditor.windowManager.close();
-			}
-			SqueezeBox.close();
-		}"
+			"
 		);
 
 		// Set static array
