@@ -37,6 +37,7 @@ class JoomlaInstallerScript
 		$this->clearRadCache();
 		$this->updateAssets();
 		$this->clearStatsCache();
+		$this->updateUtf8Mb4();
 	}
 
 	/**
@@ -1566,5 +1567,116 @@ class JoomlaInstallerScript
 		}
 
 		return true;
+	}
+
+	/**
+	 * Update the database with the correct UTF8MB4 settings.
+	 *
+	 * @return  void.
+	 *
+	 * @since   3.5.0
+	 */
+	private function updateUtf8Mb4()
+	{
+		$db = JFactory::getDbo();
+
+		// Setup the adapter for the indexer.
+		$format = $db->name;
+
+		if ($format == 'mysqli' || $format == 'pdomysql')
+		{
+			$format = 'mysql';
+		}
+
+		if ($format == 'mysql')
+		{
+			$fileName = JPATH_ADMINISTRATOR . "/components/com_admin/sql/utf8mb4/$format/3.5.0-2015-07-01.sql";
+
+			// Split the queries
+			$fileContents = @file_get_contents($fileName);
+			$queries = $db->splitSql($fileContents);
+
+			if (count($queries) == 0)
+			{
+				// No queries to process
+				return;
+			}
+
+			$utf8mb4IsSupported = $this->serverClaimsUtf8mb4Support($db->name);
+
+			// Execute the queries
+			foreach ($queries as $query)
+			{
+				$query = trim($query);
+
+				if ($query != '' && $query{0} != '#')
+				{
+					try
+					{
+						if (!$utf8mb4IsSupported)
+						{
+							$query = str_replace('utf8mb4', 'utf8', $query);
+						}
+
+						$db->setQuery($query)->execute();
+					}
+					catch (RuntimeException $e)
+					{
+						JFactory::getApplication()->enqueueMessage(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $e->getCode(), $e->getMessage()));
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Does the database server claim to have support for UTF-8 Multibyte (utf8mb4) collation?
+	 *
+	 * libmysql supports utf8mb4 since 5.5.3 (same version as the MySQL server). mysqlnd supports utf8mb4 since 5.0.9.
+	 *
+	 * @param   string  $format  The type of database connection.
+	 *
+	 * @return  boolean
+	 *
+	 * @since   3.5.0
+	 */
+	private function serverClaimsUtf8mb4Support($format)
+	{
+		$db = JFactory::getDbo();
+
+		switch ($format)
+		{
+			case 'mysql':
+				$client_version = mysql_get_client_info();
+				$server_version = $db->getVersion();
+				break;
+			case 'mysqli':
+				$client_version = mysqli_get_client_info();
+				$server_version = $db->getVersion();
+				break;
+			case 'pdomysql';
+				$client_version = $db->getOption(PDO::ATTR_CLIENT_VERSION);
+				$server_version = $db->getOption(PDO::ATTR_SERVER_VERSION);
+				break;
+			default:
+				$client_version = false;
+				$server_version = false;
+		}
+
+		if ($client_version && version_compare($server_version, '5.5.3', '>='))
+		{
+			if (strpos($client_version, 'mysqlnd') !== false)
+			{
+				$client_version = preg_replace('/^\D+([\d.]+).*/', '$1', $client_version);
+
+				return version_compare($client_version, '5.0.9', '>=');
+			}
+			else
+			{
+				return version_compare($client_version, '5.5.3', '>=');
+			}
+		}
+
+		return false;
 	}
 }
