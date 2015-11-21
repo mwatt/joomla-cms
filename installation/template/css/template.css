@@ -140,3 +140,8 @@ textarea.noResize {
 .tooltip {
 	white-space: pre-wrap;
 }
+
+.controls .progress {
+	margin-top: 7px;
+	width: 220px;
+}

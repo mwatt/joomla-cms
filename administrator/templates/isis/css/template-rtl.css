@@ -8150,6 +8150,10 @@ body.modal-open {
 	padding: 5px 10px;
 	overflow: hidden;
 }
+.controls .progress {
+	margin-top: 7px;
+	width: 220px;
+}
 .pull-right {
 	float: left;
 }
