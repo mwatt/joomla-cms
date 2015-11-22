@@ -613,6 +613,8 @@ class PlgSystemLanguageFilter extends JPlugin
 			$active = $menu->getActive();
 			$levels = JFactory::getUser()->getAuthorisedViewLevels();
 			$remove_default_prefix = $this->params->get('remove_default_prefix', 0);
+			$xdefault = $this->params->get('xdefault', $this->default_lang);
+			$xdefault = ( $xdefault == 'default' ) ? $this->default_lang : $xdefault;
 			$server = JUri::getInstance()->toString(array('scheme', 'host', 'port'));
 			$is_home = false;
 
@@ -694,6 +696,13 @@ class PlgSystemLanguageFilter extends JPlugin
 				foreach ($languages as $i => &$language)
 				{
 					$doc->addHeadLink($server . $language->link, 'alternate', 'rel', array('hreflang' => $i));
+				}
+
+				// Add x-default language tag
+				if (isset($languages[$xdefault]))
+				{
+					// Use a custom tag because addHeadLink is limited to one URI per tag
+					$doc->addCustomTag('<link href="' . $server . $languages[$xdefault]->link . '" rel="alternate" hreflang="x-default" />');
 				}
 			}
 		}
