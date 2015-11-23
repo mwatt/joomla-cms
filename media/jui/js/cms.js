@@ -19,32 +19,34 @@ Joomla.setcollapse = function(url, name, height) {
 
 if (jQuery) {
 	jQuery(document).ready(function($) {
-		var elements = {},
-			linkedoptions = function(element, target, checkType) {
-				var v = element.val(), id = element.attr('id');
-				if(checkType && !element.is(':checked'))
-					return;
-				$('[rel=\"showon_'+target+'\"]').each(function(){
-					var i = jQuery(this);
-					if (i.hasClass('showon_' + v))
-						i.slideDown();
-					else
-						i.slideUp();
+		var linkedoptions = function(target) {
+			var showfield = true, itemval, jsondata = target.data()['showon'];
+
+			// Check if target conditions are satisfied
+			$.each(jsondata, function(j, item) {
+				itemval = (['checkbox','radio'].indexOf($('[name="' + jsondata[j]['field'] + '"]').attr('type')) != -1) ? $('[name="' + jsondata[j]['field'] + '"]:checked').val() : $('[name="' + jsondata[j]['field'] + '"]').val();
+				jsondata[j]['valid'] = (jsondata[j]['values'].indexOf(itemval) != -1) ? 1 : 0;
+				if (   (jsondata[j]['op'] == ''    && jsondata[j]['valid'] == 0)
+					|| (jsondata[j]['op'] == 'AND' && jsondata[j]['valid'] + jsondata[j-1]['valid'] < 2)
+					|| (jsondata[j]['op'] == 'OR'  && jsondata[j]['valid'] + jsondata[j-1]['valid'] < 1))
+					{ showfield = false; }
+			});
+
+			// If all satisfied show the target field(s), else hide
+			(showfield) ? target.slideDown() : target.slideUp();
+		};
+
+		$('[data-showon]').each(function() {
+			var target = $(this), jsondata = $(this).data()['showon'];
+
+			// Attach events to referenced element
+			$.each(jsondata, function(j, item) {
+				$('[name="' + jsondata[j]['field'] + '"]').each(function() {
+					linkedoptions(target);
+				}).bind('change click', function() {
+					linkedoptions(target);
 				});
-			};
-		$('[rel^=\"showon_\"]').each(function(){
-			var el = $(this), target = el.attr('rel').replace('showon_', ''), targetEl = $('[name=\"' + target+'\"]');
-			if (!elements[target]) {
-				var targetType = targetEl.attr('type'), checkType = (targetType == 'checkbox' || targetType == 'radio');
-				targetEl.bind('change', function(){
-					linkedoptions( $(this), target, checkType);
-				}).bind('click', function(){
-					linkedoptions( $(this), target, checkType );
-				}).each(function(){
-					linkedoptions( $(this), target, checkType );
-				});
-				elements[target] = true;
-			}
+			});
 		});
 	});
 }
