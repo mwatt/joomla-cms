@@ -586,6 +586,15 @@ class PlgEditorTinymce extends JPlugin
 			$plugins[] = 'advlist';
 		}
 
+		// Codesample
+		$codesample = $this->params->get('code_sample', 1);
+
+		if (isset($access[$codesample]))
+		{
+			$plugins[]      = 'codesample';
+			$toolbar4_add[] = 'codesample';
+		}
+
 		// Autosave
 		$autosave = $this->params->get('autosave', 1);
 
