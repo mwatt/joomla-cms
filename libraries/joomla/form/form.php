@@ -1216,7 +1216,8 @@ class JForm
 		}
 
 		// Get the field filter type.
-		$filter = (string) $element['filter'];
+		$filter   = (string) $element['filter'];
+		$validate = (string) $element['validate'];
 
 		// Process the input value based on the filter.
 		$return = null;
@@ -1272,13 +1273,17 @@ class JForm
 
 			// Convert a date to UTC based on the server timezone offset.
 			case 'SERVER_UTC':
-				if ((int) $value > 0)
+				if ((int) $value > 0 && strtotime($value) !== false)
 				{
 					// Get the server timezone setting.
 					$offset = JFactory::getConfig()->get('offset');
 
 					// Return an SQL formatted datetime string in UTC.
 					$return = JFactory::getDate($value, $offset)->toSql();
+				}
+				elseif ($validate == 'datetime')
+				{
+					$return = $value;
 				}
 				else
 				{
@@ -1288,13 +1293,17 @@ class JForm
 
 			// Convert a date to UTC based on the user timezone offset.
 			case 'USER_UTC':
-				if ((int) $value > 0)
+				if ((int) $value > 0 && strtotime($value) !== false)
 				{
 					// Get the user timezone setting defaulting to the server timezone setting.
 					$offset = JFactory::getUser()->getParam('timezone', JFactory::getConfig()->get('offset'));
 
 					// Return a MySQL formatted datetime string in UTC.
 					$return = JFactory::getDate($value, $offset)->toSql();
+				}
+				elseif ($validate == 'datetime')
+				{
+					$return = $value;
 				}
 				else
 				{
