@@ -840,30 +840,17 @@ class PlgEditorTinymce extends JPlugin
 		{
 			JFactory::getDocument()->addScriptDeclaration(
 					"
-		if (jModalClose != undefined)
-		{
+		if (jModalClose === undefined && typeof(jModalClose) != 'function') {
+			var SqueezeBox, jModalClose;
 			jModalClose = function() {
-				SqueezeBox.close();
 				tinyMCE.activeEditor.windowManager.close();
 			}
 		} else {
-			function jModalClose() {
+			var oldClose = jModalClose;
+			jModalClose = function() {
+				oldClose.apply(this, arguments);
 				tinyMCE.activeEditor.windowManager.close();
-			}
-		}
-
-		var SqueezeBox;
-		if (SqueezeBox != undefined)
-		{
-			tinyClose = function(){
-				tinyMCE.activeEditor.windowManager.close();
-			}
-			SqueezeBox.close.bind(tinyClose);
-		} else {
-			var SqueezeBox = {};
-			SqueezeBox.close = function(){
-				tinyMCE.activeEditor.windowManager.close();
-			}
+			};
 		}
 			"
 			);
