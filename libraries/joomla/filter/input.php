@@ -103,7 +103,7 @@ class JFilterInput
 		'script',
 		'style',
 		'title',
-		'xml'
+		'xml',
 	);
 
 	/**
@@ -117,7 +117,7 @@ class JFilterInput
 		'background',
 		'codebase',
 		'dynsrc',
-		'lowsrc'
+		'lowsrc',
 	);
 
 	/**
@@ -203,9 +203,9 @@ class JFilterInput
 	 *
 	 * @param   mixed   $source  Input string/array-of-string to be 'cleaned'
 	 * @param   string  $type    The return type for the variable:
-	 *                           INT:       An integer,
-	 *                           UINT:      An unsigned integer,
-	 *                           FLOAT:     A floating point number,
+	 *                           INT:       An integer, or an array of integers,
+	 *                           UINT:      An unsigned integer, or an array of unsigned integers,
+	 *                           FLOAT:     A floating point number, or an array of floating point numbers,
 	 *                           BOOLEAN:   A boolean value,
 	 *                           WORD:      A string containing A-Z or underscores only (not case sensitive),
 	 *                           ALNUM:     A string containing A-Z or 0-9 only (not case sensitive),
@@ -214,7 +214,7 @@ class JFilterInput
 	 *                           STRING:    A fully decoded and sanitised string (default),
 	 *                           HTML:      A sanitised string,
 	 *                           ARRAY:     An array,
-	 *                           PATH:      A sanitised file path,
+	 *                           PATH:      A sanitised file path, or an array of sanitised file paths,
 	 *                           TRIM:      A string trimmed from normal, non-breaking and multibyte spaces
 	 *                           USERNAME:  Do not use (use an application specific filter),
 	 *                           RAW:       The raw string is returned with no filtering,
@@ -234,27 +234,69 @@ class JFilterInput
 			$source = $this->stripUSC($source);
 		}
 
-		// Handle the type constraint
+		// Handle the type constraint cases
 		switch (strtoupper($type))
 		{
 			case 'INT':
 			case 'INTEGER':
-				// Only use the first integer value
-				preg_match('/-?[0-9]+/', (string) $source, $matches);
-				$result = @ (int) $matches[0];
+				$pattern = '/[-+]?[0-9]+/';
+
+				if (is_array($source))
+				{
+					// Itterate through the array
+					foreach ($source as $eachString)
+					{
+						preg_match($pattern, (string) $eachString, $matches);
+						$result[] = isset($matches[0]) ? (int) $matches[0] : 0;
+					}
+				}
+				else
+				{
+					preg_match($pattern, (string) $source, $matches);
+					$result = isset($matches[0]) ? (int) $matches[0] : 0;
+				}
+
 				break;
 
 			case 'UINT':
-				// Only use the first integer value
-				preg_match('/-?[0-9]+/', (string) $source, $matches);
-				$result = @ abs((int) $matches[0]);
+				$pattern = '/[-+]?[0-9]+/';
+
+				if (is_array($source))
+				{
+					// Itterate through the array
+					foreach ($source as $eachString)
+					{
+						preg_match($pattern, (string) $eachString, $matches);
+						$result[] = isset($matches[0]) ? abs((int) $matches[0]) : 0;
+					}
+				}
+				else
+				{
+					preg_match($pattern, (string) $source, $matches);
+					$result = isset($matches[0]) ? abs((int) $matches[0]) : 0;
+				}
+
 				break;
 
 			case 'FLOAT':
 			case 'DOUBLE':
-				// Only use the first floating point value
-				preg_match('/-?[0-9]+(\.[0-9]+)?/', (string) $source, $matches);
-				$result = @ (float) $matches[0];
+				$pattern = '/[-+]?[0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?/';
+
+				if (is_array($source))
+				{
+					// Itterate through the array
+					foreach ($source as $eachString)
+					{
+						preg_match($pattern, (string) $eachString, $matches);
+						$result[] = isset($matches[0]) ? (float) $matches[0] : 0;
+					}
+				}
+				else
+				{
+					preg_match($pattern, (string) $source, $matches);
+					$result = isset($matches[0]) ? (float) $matches[0] : 0;
+				}
+
 				break;
 
 			case 'BOOL':
@@ -293,8 +335,22 @@ class JFilterInput
 
 			case 'PATH':
 				$pattern = '/^[A-Za-z0-9_\/-]+[A-Za-z0-9_\.-]*([\\\\\/][A-Za-z0-9_-]+[A-Za-z0-9_\.-]*)*$/';
-				preg_match($pattern, (string) $source, $matches);
-				$result = @ (string) $matches[0];
+
+				if (is_array($source))
+				{
+					// Itterate through the array
+					foreach ($source as $eachString)
+					{
+						preg_match($pattern, (string) $eachString, $matches);
+						$result[] = isset($matches[0]) ? (string) $matches[0] : '';
+					}
+				}
+				else
+				{
+					preg_match($pattern, $source, $matches);
+					$result = isset($matches[0]) ? (string) $matches[0] : '';
+				}
+
 				break;
 
 			case 'TRIM':
@@ -336,7 +392,7 @@ class JFilterInput
 					}
 					else
 					{
-						// Not an array or string.. return the passed parameter
+						// Not an array or string... return the passed parameter
 						$result = $source;
 					}
 				}
