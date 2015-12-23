@@ -157,7 +157,7 @@ class JHttpTransportCurl implements JHttpTransport
 		 * Follow redirects if server config allows
 		 * @deprecated  safe_mode is removed in PHP 5.4, check will be dropped when PHP 5.3 support is dropped
 		 */
-		if (!ini_get('safe_mode') && !ini_get('open_basedir'))
+		if (PHP_VERSION_ID >= 50600 || (!ini_get('safe_mode') && !ini_get('open_basedir')))
 		{
 			$options[CURLOPT_FOLLOWLOCATION] = (bool) $this->options->get('follow_location', true);
 		}
@@ -207,7 +207,16 @@ class JHttpTransportCurl implements JHttpTransport
 		// Close the connection.
 		curl_close($ch);
 
-		return $this->getResponse($content, $info);
+		$response = $this->getResponse($content, $info);
+
+		// Manually follow redirects if server config doesn't allow to follow then using curl
+		// Used for PHP 5.5 or lower with safe_mode or open_basedir enabled
+		if ($response->code >= 301 && $response->code < 400 && isset($response->headers['Location']))
+		{
+			$response = $this->request($method, new JUri($response->headers['Location']), $data, $headers, $timeout, $userAgent);
+		}
+
+		return $response;
 	}
 
 	/**
