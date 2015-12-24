@@ -154,10 +154,12 @@ class JHttpTransportCurl implements JHttpTransport
 		$options[CURLOPT_HTTPHEADER][] = 'Expect:';
 
 		/*
-		 * Follow redirects if server config allows
+		 * Follow redirects if server allows
+		 * Server allows if it uses PHP 5.6+ and libcurl 7.19.4+ or lower versions with safe_mode and open_basedir disabled in php config
 		 * @deprecated  safe_mode is removed in PHP 5.4, check will be dropped when PHP 5.3 support is dropped
 		 */
-		if (!ini_get('safe_mode') && !ini_get('open_basedir'))
+		if ((version_compare(PHP_VERSION, '5.6', 'ge') && version_compare(curl_version()['version'], '7.19.4', 'ge'))
+			|| (!ini_get('safe_mode') && !ini_get('open_basedir')))
 		{
 			$options[CURLOPT_FOLLOWLOCATION] = (bool) $this->options->get('follow_location', true);
 		}
@@ -207,7 +209,20 @@ class JHttpTransportCurl implements JHttpTransport
 		// Close the connection.
 		curl_close($ch);
 
-		return $this->getResponse($content, $info);
+		$response = $this->getResponse($content, $info);
+
+		// Manually follow redirects if server doesn't allow to follow location using curl
+		if ($response->code >= 301 && $response->code < 400 && isset($response->headers['Location']))
+		{
+			$redirect_uri = new JUri($response->headers['Location']);
+			if (in_array($redirect_uri->getScheme(), array('file', 'scp')))
+			{
+				throw new RuntimeException('Curl redirect cannot be used in file or scp requests.');
+			}
+			$response = $this->request($method, $redirect_uri, $data, $headers, $timeout, $userAgent);
+		}
+
+		return $response;
 	}
 
 	/**
