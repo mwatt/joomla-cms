@@ -27,15 +27,15 @@ class ConfigController extends JControllerLegacy
 	/**
 	 * Method to display the view.
 	 *
-	 * @param   boolean  $cachable   If true, the view output will be cached
-	 * @param   array    $urlparams  An array of safe url parameters and their variable types, for valid values see {@link JFilterInput::clean()}.
+	 * @param   boolean  $cacheable   If true, the view output will be cached
+	 * @param   array    $urlparams   An array of safe url parameters and their variable types, for valid values see {@link JFilterInput::clean()}.
 	 *
 	 * @return  ConfigController  This object to support chaining.
 	 *
 	 * @since   1.5
 	 * @deprecated  4.0
 	 */
-	public function display($cachable = false, $urlparams = array())
+	public function display($cacheable = false, $urlparams = array())
 	{
 		// Set the default view name and format from the Request.
 		$vName = $this->input->get('view', 'application');
