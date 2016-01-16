@@ -53,6 +53,9 @@ class JDocumentRendererHtmlHead extends JDocumentRenderer
 			$document->_metaTags['standard']['tags'] = implode(', ', $tagsHelper->getTagNames($document->_metaTags['standard']['tags']));
 		}
 
+		// Attach the assets
+		JHtml::_('asset.instance')->attach($document);
+
 		// Trigger the onBeforeCompileHead event
 		$app = JFactory::getApplication();
 		$app->triggerEvent('onBeforeCompileHead');
