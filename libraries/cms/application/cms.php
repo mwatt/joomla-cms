@@ -261,6 +261,12 @@ class JApplicationCms extends JApplicationWeb
 		{
 			// Render the application output.
 			$this->render();
+
+			// Trigger the onAfterRender event.
+			$this->triggerEvent('onAfterRender');
+
+			// Mark afterRender in the profiler.
+			JDEBUG ? $this->profiler->mark('afterRender') : null;
 		}
 
 		// If gzip compression is enabled in configuration and the server is compliant, compress the output.
@@ -270,6 +276,9 @@ class JApplicationCms extends JApplicationWeb
 
 			// Trigger the onAfterCompress event.
 			$this->triggerEvent('onAfterCompress');
+
+			// Mark afterRender in the profiler.
+			JDEBUG ? $this->profiler->mark('AfterCompress') : null;
 		}
 
 		// Send the application response.
@@ -277,6 +286,12 @@ class JApplicationCms extends JApplicationWeb
 
 		// Trigger the onAfterRespond event.
 		$this->triggerEvent('onAfterRespond');
+
+		// Mark AfterRespond in the profiler.
+		JDEBUG ? $this->profiler->mark('AfterRespond') : null;
+
+		// Trigger the onAfterExecute event. e.g. For debug system plugin.
+		$this->triggerEvent('onAfterExecute');
 	}
 
 	/**
@@ -1069,12 +1084,6 @@ class JApplicationCms extends JApplicationWeb
 
 		// Set the application output data.
 		$this->setBody($data);
-
-		// Trigger the onAfterRender event.
-		$this->triggerEvent('onAfterRender');
-
-		// Mark afterRender in the profiler.
-		JDEBUG ? $this->profiler->mark('afterRender') : null;
 	}
 
 	/**
