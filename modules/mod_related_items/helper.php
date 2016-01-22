@@ -109,15 +109,7 @@ abstract class ModRelatedItemsHelper
 				$case_when .= $query->concatenate(array($a_id, 'a.alias'), ':');
 				$case_when .= ' ELSE ';
 				$case_when .= $a_id . ' END as slug';
-				$query->select($case_when);
 
-				$case_when = ' CASE WHEN ';
-				$case_when .= $query->charLength('cc.alias', '!=', '0');
-				$case_when .= ' THEN ';
-				$c_id = $query->castAsChar('cc.id');
-				$case_when .= $query->concatenate(array($c_id, 'cc.alias'), ':');
-				$case_when .= ' ELSE ';
-				$case_when .= $c_id . ' END as catslug';
 				$query->select($case_when)
 					->from('#__content AS a')
 					->join('LEFT', '#__content_frontpage AS f ON f.content_id = a.id')
@@ -179,9 +171,11 @@ abstract class ModRelatedItemsHelper
 			foreach ($related as &$item)
 			{
 				$item->slug    = $item->id . ':' . $item->alias;
+
+				// Catslug is depricated and will be removed in 4.0. Use catid instead.
 				$item->catslug = $item->catid . ':' . $item->category_alias;
 
-				$item->route = JRoute::_(ContentHelperRoute::getArticleRoute($item->slug, $item->catid, $item->language));
+				$item->route   = JRoute::_(ContentHelperRoute::getArticleRoute($item->slug, $item->catid, $item->language));
 			}
 		}
 
