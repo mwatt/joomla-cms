@@ -69,7 +69,7 @@ class JSchemaChangeitemMysql extends JSchemaChangeitem
 				$this->queryType = 'ADD_COLUMN';
 				$this->msgElements = array($this->fixQuote($wordArray[2]), $this->fixQuote($wordArray[5]));
 			}
-			elseif ($alterCommand == 'ADD INDEX' || $alterCommand == 'ADD UNIQUE')
+			elseif ($alterCommand == 'ADD INDEX' || $alterCommand == 'ADD KEY' || $alterCommand == 'ADD UNIQUE')
 			{
 				if ($pos = strpos($wordArray[5], '('))
 				{
@@ -84,12 +84,66 @@ class JSchemaChangeitemMysql extends JSchemaChangeitem
 				$this->queryType = 'ADD_INDEX';
 				$this->msgElements = array($this->fixQuote($wordArray[2]), $index);
 			}
-			elseif ($alterCommand == 'DROP INDEX')
+			elseif ($alterCommand == 'DROP INDEX' || $alterCommand == 'DROP KEY')
 			{
-				$index = $this->fixQuote($wordArray[5]);
+				$posIdx = 5;
+
+				if (count($wordArray) > 8)
+				{
+					if (substr($wordArray[5], -4) == ',ADD')
+					{
+						$alterCommand2 = strtoupper($wordArray[6]);
+						if ($alterCommand2 == 'INDEX' || $alterCommand2 == 'KEY' || $alterCommand2 == 'UNIQUE')
+						{
+							$posIdx = 7;
+						}
+					}
+					elseif (substr($wordArray[5], -1) == ',')
+					{
+						$alterCommand2 = strtoupper($wordArray[6] . ' ' . $wordArray[7]);
+						if ($alterCommand2 == 'ADD INDEX' || $alterCommand2 == 'ADD KEY' || $alterCommand2 == 'ADD UNIQUE')
+						{
+							$posIdx = 8;
+						}
+					}
+					elseif (substr($wordArray[6], 0, 1) == ',')
+					{
+						$alterCommand2 = strtoupper($wordArray[6] . ' ' . $wordArray[7]);
+						if ($alterCommand2 == ',ADD INDEX' || $alterCommand2 == ',ADD KEY' || $alterCommand2 == ',ADD UNIQUE')
+						{
+							$posIdx = 8;
+						}
+					}
+					elseif ((count($wordArray) > 9) && ($wordArray[6] == ','))
+					{
+						$alterCommand2 = strtoupper($wordArray[7] . ' ' . $wordArray[8]);
+						if ($alterCommand2 == 'ADD INDEX' || $alterCommand2 == 'ADD KEY' || $alterCommand2 == 'ADD UNIQUE')
+						{
+							$posIdx = 9;
+						}
+					}
+				}
+
+				if ($posIdx > 5)
+				{
+					if ($pos = strpos($wordArray[$posIdx], '('))
+					{
+						$index = $this->fixQuote(substr($wordArray[$posIdx], 0, $pos));
+					}
+					else
+					{
+						$index = $this->fixQuote($wordArray[$posIdx]);
+					}
+
+					$this->queryType = 'ADD_INDEX';
+				}
+				else
+				{
+					$index = $this->fixQuote($wordArray[5]);
+					$this->queryType = 'DROP_INDEX';
+					$this->checkQueryExpected = 0;
+				}
 				$result = 'SHOW INDEXES IN ' . $wordArray[2] . ' WHERE Key_name = ' . $index;
-				$this->queryType = 'DROP_INDEX';
-				$this->checkQueryExpected = 0;
 				$this->msgElements = array($this->fixQuote($wordArray[2]), $index);
 			}
 			elseif ($alterCommand == 'DROP COLUMN')
@@ -99,6 +153,25 @@ class JSchemaChangeitemMysql extends JSchemaChangeitem
 				$this->queryType = 'DROP_COLUMN';
 				$this->checkQueryExpected = 0;
 				$this->msgElements = array($this->fixQuote($wordArray[2]), $index);
+			}
+			elseif (($alterCommand == 'CONVERT TO') && (count($wordArray) > 9))
+			{
+				if ((strtoupper($wordArray[5] . $wordArray[6]) == 'CHARACTERSET')
+					&& ($wordArray[8] == 'COLLATE'))
+				{
+					$table = $wordArray[2];
+					$collat = $this->fixQuote(strtolower($wordArray[9]));
+
+					if (!$this->db->hasUTF8mb4Support())
+					{
+						$collat = str_replace('utf8mb4', 'utf8', $collat);
+					}
+
+					$result = 'SHOW TABLE STATUS WHERE Name = ' . $this->fixQuote($table)
+						. ' AND Collation = ' . $collat;
+					$this->queryType = 'CREATE_TABLE';
+					$this->msgElements = array($this->fixQuote($table) . ' (COLLATION ' . $collat . ')');
+				}
 			}
 			elseif (strtoupper($wordArray[3]) == 'MODIFY')
 			{
