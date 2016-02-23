@@ -64,7 +64,7 @@ class LanguagesViewInstalled extends JViewLegacy
 		$this->filterForm    = $this->get('FilterForm');
 		$this->activeFilters = $this->get('ActiveFilters');
 
-		LanguagesHelper::addSubmenu('installed', $this->state->get('client_id', 0));
+		LanguagesHelper::addSubmenu('installed');
 
 		// Check for errors.
 		if (count($errors = $this->get('Errors')))
