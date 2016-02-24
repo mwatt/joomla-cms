@@ -49,7 +49,7 @@ class SearchModelSearches extends JModelList
 	 *
 	 * @since   1.6
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'a.hits', $direction = 'asc')
 	{
 		// Load the filter state.
 		$search = $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search', false, 'string', false);
@@ -63,7 +63,7 @@ class SearchModelSearches extends JModelList
 		$this->setState('params', $params);
 
 		// List state information.
-		parent::populateState('a.hits', 'asc');
+		parent::populateState($ordering, $direction);
 	}
 
 	/**

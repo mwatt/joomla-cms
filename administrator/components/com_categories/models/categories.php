@@ -62,7 +62,7 @@ class CategoriesModelCategories extends JModelList
 	 *
 	 * @since   1.6
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'a.lft', $direction = 'asc')
 	{
 		$app = JFactory::getApplication();
 
@@ -102,7 +102,7 @@ class CategoriesModelCategories extends JModelList
 		$this->setState('filter.tag', $tag);
 
 		// List state information.
-		parent::populateState('a.lft', 'asc');
+		parent::populateState($ordering, $direction);
 
 		// Force a language
 		$forcedLanguage = $app->input->get('forcedLanguage');

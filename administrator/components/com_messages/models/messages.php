@@ -58,7 +58,7 @@ class MessagesModelMessages extends JModelList
 	 *
 	 * @since   1.6
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'a.date_time', $direction = 'desc')
 	{
 		// Load the filter state.
 		$search = $this->getUserStateFromRequest($this->context . '.filter.search', 'filter_search');
@@ -68,7 +68,7 @@ class MessagesModelMessages extends JModelList
 		$this->setState('filter.state', $state);
 
 		// List state information.
-		parent::populateState('a.date_time', 'desc');
+		parent::populateState($ordering, $direction);
 	}
 
 	/**
