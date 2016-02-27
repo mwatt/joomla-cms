@@ -64,6 +64,39 @@ class JSchemaChangeset
 		{
 			$this->changeItems[] = JSchemaChangeitem::getInstance($db, $obj->file, $obj->updateQuery);
 		}
+
+		// If on mysql, add a query at the end to check for utf8mb4 conversion
+		$sqlFolder = $this->db->name;
+
+		if ($sqlFolder == 'mysqli' || $sqlFolder == 'pdomysql')
+		{
+			// Let the update query insert the record
+			$tmpSchemaChangeItem = JSchemaChangeitem::getInstance(
+				$db,
+				'utf8mb4-conversion.sql',
+				'INSERT INTO ' . $this->db->quoteName('#__mysql_utf8_mb4_test')
+				. ' (' . $this->db->quoteName('converted') . ') ' . ' VALUES (0);');
+
+			// Set to no skipped
+			$tmpSchemaChangeItem->checkStatus = 0;
+
+			// Set the check query
+			$tmpSchemaChangeItem->checkQuery = 'SELECT '
+				. $this->db->quoteName('converted')
+				. ' FROM ' . $this->db->quoteName('#__mysql_utf8_mb4_test')
+				. ' WHERE ' . $this->db->quoteName('converted') . ' = 1;';
+
+			// Set expected records from check query
+			$tmpSchemaChangeItem->checkQueryExpected = 1;
+
+			// ToDo: New query type for better output message
+			$tmpSchemaChangeItem->queryType = 'CREATE_TABLE';
+
+			// ToDo: Better output message
+			$tmpSchemaChangeItem->msgElements = array('utf8mb4 conversion');
+
+			$this->changeItems[] = $tmpSchemaChangeItem;
+		}
 	}
 
 	/**
