@@ -72,6 +72,7 @@ class AdminModelSysInfo extends JModelLegacy
 			'Cookie',
 			'DOCUMENT_ROOT',
 			'extension_dir',
+			'error_log',
 			'Host',
 			'HTTP_COOKIE',
 			'HTTP_HOST',
@@ -99,6 +100,7 @@ class AdminModelSysInfo extends JModelLegacy
 			'Server Root',
 			'session.name',
 			'session.save_path',
+			'upload_tmp_dir',
 			'User/Group',
 		),
 		'other' => array(
@@ -615,7 +617,7 @@ class AdminModelSysInfo extends JModelLegacy
 	 */
 	private function addDirectory($name, $path, $message = '')
 	{
-		$this->directories[$name] = array('writable' => is_writable($path), 'message' => $message);
+		$this->directories[str_replace(JPATH_ROOT, '', $name)] = array('writable' => is_writable($path), 'message' => $message);
 	}
 
 	/**
