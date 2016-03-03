@@ -72,6 +72,7 @@ class AdminModelSysInfo extends JModelLegacy
 			'Cookie',
 			'DOCUMENT_ROOT',
 			'extension_dir',
+			'error_log',
 			'Host',
 			'HTTP_COOKIE',
 			'HTTP_HOST',
@@ -99,6 +100,7 @@ class AdminModelSysInfo extends JModelLegacy
 			'Server Root',
 			'session.name',
 			'session.save_path',
+			'upload_tmp_dir',
 			'User/Group',
 		),
 		'other' => array(
@@ -181,7 +183,14 @@ class AdminModelSysInfo extends JModelLegacy
 
 			if (in_array($section, $privateSettings, true))
 			{
-				$dataArray[$section] = $this->cleanSectionPrivateData($values);
+				if(strstr($values, JPATH_ROOT))
+				{
+					$dataArray[$section] = 'xxxxxx';
+				}
+				else
+				{
+					$dataArray[$section] = $this->cleanSectionPrivateData($values);
+				}
 			}
 		}
 
@@ -596,8 +605,8 @@ class AdminModelSysInfo extends JModelLegacy
 			$this->addDirectory('administrator/cache', JPATH_CACHE, 'COM_ADMIN_CACHE_DIRECTORY');
 		}
 
-		$this->addDirectory($registry->get('log_path', JPATH_ROOT . '/log'), $registry->get('log_path', JPATH_ROOT . '/log'), 'COM_ADMIN_LOG_DIRECTORY');
-		$this->addDirectory($registry->get('tmp_path', JPATH_ROOT . '/tmp'), $registry->get('tmp_path', JPATH_ROOT . '/tmp'), 'COM_ADMIN_TEMP_DIRECTORY');
+		$this->addDirectory('log', $registry->get('log_path', JPATH_ROOT . '/log'), 'COM_ADMIN_LOG_DIRECTORY');
+		$this->addDirectory('tmp', $registry->get('tmp_path', JPATH_ROOT . '/tmp'), 'COM_ADMIN_TEMP_DIRECTORY');
 
 		return $this->directories;
 	}
