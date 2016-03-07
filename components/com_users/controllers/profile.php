@@ -114,10 +114,10 @@ class UsersControllerProfile extends UsersController
 		}
 
 		// Validate the posted data.
-		$data = $model->validate($form, $data);
+		$validData = $model->validate($form, $data);
 
 		// Check for errors.
-		if ($data === false)
+		if ($validData === false)
 		{
 			// Get the validation messages.
 			$errors = $model->getErrors();
@@ -146,13 +146,13 @@ class UsersControllerProfile extends UsersController
 		}
 
 		// Attempt to save the data.
-		$return = $model->save($data);
+		$return = $model->save($validData);
 
 		// Check for errors.
 		if ($return === false)
 		{
 			// Save the data in the session.
-			$app->setUserState('com_users.edit.profile.data', $data);
+			$app->setUserState('com_users.edit.profile.data', $validData);
 
 			// Redirect back to the edit screen.
 			$userId = (int) $app->getUserState('com_users.edit.profile.id');
