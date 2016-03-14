@@ -541,7 +541,7 @@ ENDDATA;
 	{
 		$installer = JInstaller::getInstance();
 
-		$installer->setPath('source', JPATH_ROOT);
+		$installer->setPath('source', JPATH_MANIFESTS . '/files');
 		$installer->setPath('extension_root', JPATH_ROOT);
 
 		if (!$installer->setupInstall())
@@ -719,19 +719,6 @@ ENDDATA;
 		// Append messages.
 		$msg .= ob_get_contents();
 		ob_end_clean();
-
-		// Lastly, we will copy the manifest file to its appropriate place.
-		$manifest = array();
-		$manifest['src'] = $installer->getPath('manifest');
-		$manifest['dest'] = JPATH_MANIFESTS . '/files/' . basename($installer->getPath('manifest'));
-
-		if (!$installer->copyFiles(array($manifest), true))
-		{
-			// Install failed, rollback changes.
-			$installer->abort(JText::_('JLIB_INSTALLER_ABORT_FILE_INSTALL_COPY_SETUP'));
-
-			return false;
-		}
 
 		// Clobber any possible pending updates.
 		$update = JTable::getInstance('update');
