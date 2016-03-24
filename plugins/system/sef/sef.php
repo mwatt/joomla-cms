@@ -40,20 +40,50 @@ class PlgSystemSef extends JPlugin
 			return;
 		}
 
-		$uri     = JUri::getInstance();
-		$domain  = $this->params->get('domain');
-
-		if ($domain === false || $domain === '')
+		// Check if canonical already exists (for instance, added by a component) so we don't override it.
+		$canonical = '';
+		foreach ($doc->_links as $linkUrl => $link)
 		{
-			$domain = $uri->toString(array('scheme', 'host', 'port'));
+			if (isset($link['relation']) && $link['relation'] === 'canonical')
+			{
+				$canonical = $linkUrl;
+				break;
+			}
 		}
 
-		$link = $domain . JRoute::_('index.php?' . http_build_query($this->app->getRouter()->getVars()), false);
+		$domain = $this->params->get('domain', '');
 
-		if (rawurldecode($uri->toString()) !== $link)
+		// If a canonical html tag already exists and we don't override it on SEF with a custom domain, don't do anything.
+		if (!empty($canonical) && empty($domain))
 		{
-			$doc->addHeadLink(htmlspecialchars($link), 'canonical');
+			return;
 		}
+
+		$uri    = JUri::getInstance();
+		$domain = (empty($domain)) ? $uri->toString(array('scheme', 'host', 'port')) : $domain;
+
+		// If a canonical html tag already exists and we override it on SEF with a custom domain, get the new canonical.
+		if (!empty($canonical) && !empty($domain))
+		{
+			// Remove current canonical link.
+			unset($doc->_links[$canonical]);
+
+			// Set the current canonical link but use the SEF system plugin domain field.
+			$canonical = $domain . JUri::getInstance($canonical)->toString(array('path', 'query', 'fragment'));
+		}
+		// If a canonical html doesn't exists already.
+		else
+		{
+			// Set the new canonical link, but only if it uses the SEF system plugin domain field or the canonical uri it's different from the current uri.
+			$canonical = $domain . JRoute::_('index.php?' . http_build_query($this->app->getRouter()->getVars()), false);
+			if (rawurldecode($uri->toString()) === $canonical)
+			{
+				return;
+			}
+		}
+
+		// Add the canonical link.
+		$doc->addHeadLink(htmlspecialchars($canonical), 'canonical');
 	}
 
 	/**
