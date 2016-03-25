@@ -118,6 +118,40 @@ class ConfigModelApplication extends ConfigModelForm
 			return false;
 		}
 
+		// Check if we need to verify the SSL certificate
+		if (0 !== $data['force_ssl'])
+		{
+			// Connection details
+			$host = JUri::getInstance()->getHost();
+
+			// Check if TLS is available
+			$get = stream_context_create(array('tls' => array('capture_peer_cert' => true)));
+			$read = stream_socket_client('tls://' . $host . ':443', $errorNumber, $errorMessage, 30, STREAM_CLIENT_CONNECT, $get);
+			$cert = stream_context_get_params($read);
+			$result = array_key_exists('peer_certificate', $cert['options']['tls']);
+
+			if (!$result)
+			{
+				// Check if SSL is available
+				$get = stream_context_create(array('ssl' => array('capture_peer_cert' => true)));
+				$read = stream_socket_client('ssl://' . $host . ':443', $errorNumber, $errorMessage, 30, STREAM_CLIENT_CONNECT, $get);
+				$cert = stream_context_get_params($read);
+				$result = array_key_exists('peer_certificate', $cert['options']['ssl']);
+			}
+
+			// There is no SSL certificate, do not enable SSL
+			if (!$result)
+			{
+				$data['force_ssl'] = 0;
+
+				// Also update the user state
+				$app->setUserState('com_config.config.global.data.force_ssl', 0);
+
+				// Inform the user
+				$app->enqueueMessage(JText::_('COM_CONFIG_ERROR_SSL_NOT_AVAILABLE'), 'notice');
+			}
+		}
+
 		// Save the rules
 		if (isset($data['rules']))
 		{
