@@ -73,6 +73,14 @@ abstract class FinderIndexerAdapter extends JPlugin
 	protected $old_cataccess;
 
 	/**
+	 * The state of a category before save.
+	 *
+	 * @var    integer
+	 * @since  3.5
+	*/
+	protected $old_catstate;
+
+	/**
 	 * The type of content the adapter indexes.
 	 *
 	 * @var    string
@@ -406,7 +414,7 @@ abstract class FinderIndexerAdapter extends JPlugin
 			$this->change((int) $item->id, 'access', $temp);
 
 			// Reindex the item
-			$this->reindex($row->id);
+			$this->reindex($item->id);
 		}
 	}
 
@@ -429,25 +437,36 @@ abstract class FinderIndexerAdapter extends JPlugin
 		 */
 		foreach ($pks as $pk)
 		{
-			$query = clone $this->getStateQuery();
-			$query->where('c.id = ' . (int) $pk);
+			$this->updateStateByCategoryId($pk);
+		}
+	}
 
-			// Get the published states.
-			$this->db->setQuery($query);
-			$items = $this->db->loadObjectList();
+	/**
+	 * Method to update the state of all the items in a category.
+	 *
+	 * @param   int  $id  The category primary key
+	 *
+	 * @return  void
+	 *
+	 * @since   3.5
+	 */
+	protected function updateStateByCategoryId($id)
+	{
+		$query = clone $this->getStateQuery();
+		$query->where('c.id = ' . (int) $id);
 
-			// Adjust the state for each item within the category.
-			foreach ($items as $item)
-			{
-				// Translate the state.
-				$temp = $this->translateState($item->state, $value);
+		// Get the state for the category.
+		$this->db->setQuery($query);
+		$items = $this->db->loadObjectList();
 
-				// Update the item.
-				$this->change($item->id, 'state', $temp);
+		// Adjust the state for each item within the category.
+		foreach ($items as $item)
+		{
+			// Translate the state.
+			$temp = $this->translateState($item->state, $item->cat_state);
 
-				// Reindex the item
-				$this->reindex($item->id);
-			}
+			// Update the item.
+			$this->change($item->id, 'state', $temp);
 		}
 	}
 
@@ -470,6 +489,27 @@ abstract class FinderIndexerAdapter extends JPlugin
 
 		// Store the access level to determine if it changes
 		$this->old_cataccess = $this->db->loadResult();
+	}
+
+	/**
+	 * Method to check the existing state for categories
+	 *
+	 * @param   JTable  $row  A JTable object
+	 *
+	 * @return  void
+	 *
+	 * @since   3.5
+	*/
+	protected function checkCategoryState($row)
+	{
+		$query = $this->db->getQuery(true)
+			->select($this->db->quoteName('published'))
+			->from($this->db->quoteName('#__categories'))
+			->where($this->db->quoteName('id') . ' = ' . (int) $row->id);
+		$this->db->setQuery($query);
+
+		// Store the state to determine if it changes
+		$this->old_catstate = $this->db->loadResult();
 	}
 
 	/**
@@ -907,7 +947,7 @@ abstract class FinderIndexerAdapter extends JPlugin
 		// If category is present, factor in its states as well
 		if ($category !== null)
 		{
-			if ($category == 0)
+			if ($category <= 0)
 			{
 				$item = 0;
 			}
@@ -922,7 +962,7 @@ abstract class FinderIndexerAdapter extends JPlugin
 				return 1;
 
 			// All other states should return a unpublished state
-			default:
+			default;
 			case 0:
 				return 0;
 		}
