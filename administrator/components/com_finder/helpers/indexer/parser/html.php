@@ -9,6 +9,8 @@
 
 defined('_JEXEC') or die;
 
+use Joomla\String\StringHelper;
+
 JLoader::register('FinderIndexerParser', dirname(__DIR__) . '/parser.php');
 
 /**
@@ -33,7 +35,15 @@ class FinderIndexerParserHtml extends FinderIndexerParser
 	public function parse($input)
 	{
 		// Strip invalid UTF-8 characters.
-		$input = iconv("utf-8", "utf-8//IGNORE", $input);
+		if (!StringHelper::valid($input))
+		{
+			if (!function_exists('utf8_bad_strip'))
+			{
+				require_once JPATH_LIBRARIES . '/vendor/joomla/string/src/phputf8/utils/bad.php';
+			}
+
+			$input = utf8_bad_strip($input);
+		}
 
 		// Convert <style>, <noscript> and <head> tags to <script> tags
 		// so we can remove them efficiently.
