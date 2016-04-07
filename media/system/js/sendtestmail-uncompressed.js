@@ -25,43 +25,65 @@ jQuery(document).ready(function ($)
 		};
 
 		$.ajax({
-				url: sendtestmail_url,
-				data: email_data
-			})
-
-		.done(function (response)
-		{
-			var data_response = $.parseJSON(response);
+			method: "POST",
+			url: sendtestmail_url,
+			data: email_data,
+			dataType: "json"
+		})
+		.fail(function (jqXHR, textStatus, error) {
 			var msg = {};
-
-			if (data_response.data)
+			if (textStatus == 'parsererror')
 			{
-				if (typeof data_response.messages == 'object')
-				{
-					if (typeof data_response.messages.success != 'undefined' && data_response.messages.success.length > 0)
-					{
-						msg.success = [data_response.messages.success];
-					}
-				}
-
+				msg.error = ['A parse error as occured while processing the following JSON data:<br/><code style="color:inherit;white-space:pre;padding:0;margin:0;border:0;background:inherit;">' + jqXHR.responseText.trim() + '</code>'];
+			}
+			else if (textStatus == 'nocontent')
+			{
+				msg.error = ['No content has returned.'];
+			}
+			else if (textStatus == 'timeout')
+			{
+				msg.error = ['A timeout as occured while fetching the JSON data.'];
+			}
+			else if (textStatus == 'abort')
+			{
+				msg.error = ['A connection abort as occured while fetching the JSON data.'];
 			}
 			else
 			{
-				if (typeof data_response.messages == 'object')
+				msg.error = ['An error as occured while fetching the JSON data: ' + jqXHR.status + ' HTTP status code.'];
+			}
+			Joomla.renderMessages(msg);
+		})
+		.done(function (response) {
+			var msg = {};
+
+			if (response.data)
+			{
+				if (typeof response.messages == 'object')
 				{
-					if (typeof data_response.messages.error != 'undefined' && data_response.messages.error.length > 0)
+					if (typeof response.messages.success != 'undefined' && response.messages.success.length > 0)
 					{
-						msg.error = [data_response.messages.error];
+						msg.success = [response.messages.success];
+					}
+				}
+			}
+			else
+			{
+				if (typeof response.messages == 'object')
+				{
+					if (typeof response.messages.error != 'undefined' && response.messages.error.length > 0)
+					{
+						msg.error = [response.messages.error];
 					}
 
-					if (typeof data_response.messages.notice != 'undefined' && data_response.messages.notice.length > 0)
+					if (typeof response.messages.notice != 'undefined' && response.messages.notice.length > 0)
 					{
-						msg.notice = [data_response.messages.notice];
+						msg.notice = [response.messages.notice];
 					}
 
-					if (typeof data_response.messages.message != 'undefined' && data_response.messages.message.length > 0)
+					if (typeof response.messages.message != 'undefined' && response.messages.message.length > 0)
 					{
-						msg.message = [data_response.messages.message];
+						msg.message = [response.messages.message];
 					}
 				}
 			}
