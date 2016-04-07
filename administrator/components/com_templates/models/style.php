@@ -268,6 +268,9 @@ class TemplatesModelStyle extends JModelAdmin
 			$template  = JArrayHelper::getValue($data, 'template');
 		}
 
+		// Add the default fields directory
+		JForm::addFieldPath(JPATH_BASE . '/templates/' . $template . '/field');
+
 		// These variables are used to add data from the plugin XML files.
 		$this->setState('item.client_id', $clientId);
 		$this->setState('item.template', $template);
