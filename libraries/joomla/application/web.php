@@ -625,23 +625,36 @@ class JApplicationWeb extends JApplicationBase
 		$name = (string) $name;
 		$value = (string) $value;
 
-		// If the replace flag is set, unset all known headers with the given name.
-		if ($replace)
+		// Create an array of names to search for duplicates
+		$key = false;
+		if (count($this->response->headers))
 		{
+			$names = array();
 			foreach ($this->response->headers as $key => $header)
 			{
-				if ($name == $header['name'])
-				{
-					unset($this->response->headers[$key]);
-				}
+				$names[$key] = $header['name'];
 			}
 
-			// Clean up the array as unsetting nested arrays leaves some junk.
-			$this->response->headers = array_values($this->response->headers);
+			// Find existing headers by name
+			$key = array_search($name, $names);
 		}
 
-		// Add the header to the internal array.
-		$this->response->headers[] = array('name' => $name, 'value' => $value);
+		// Found & replace or not found
+		if ($key !== false && $replace || $key === false)
+		{
+
+			// Remove before insert when header is found
+			if ($key !== false)
+			{
+				unset($this->response->headers[$key]);
+
+				// Clean up the array as unsetting nested arrays leaves some junk.
+				$this->response->headers = array_values($this->response->headers);
+			}
+
+			// Add the header to the internal array.
+			$this->response->headers[] = array('name' => $name, 'value' => $value);
+		}
 
 		return $this;
 	}
@@ -650,8 +663,8 @@ class JApplicationWeb extends JApplicationBase
 	 * Method to get the array of response headers to be sent when the response is sent
 	 * to the client.
 	 *
-	 * @return  array
-	 *
+	 * @return  array	 *
+	 * 
 	 * @since   11.3
 	 */
 	public function getHeaders()
