@@ -17,29 +17,8 @@ $this->direction = $doc->direction;
 $input           = $app->input;
 $user            = JFactory::getUser();
 
-// Add JavaScript Frameworks
-JHtml::_('bootstrap.framework');
-
-$doc->addScriptVersion($this->baseurl . '/templates/' . $this->template . '/js/template.js');
-
-// Add Stylesheets
-$doc->addStyleSheetVersion($this->baseurl . '/templates/' . $this->template . '/css/template' . ($this->direction == 'rtl' ? '-rtl' : '') . '.css');
-
-// Load specific language related CSS
-$languageCss = 'language/' . $lang->getTag() . '/' . $lang->getTag() . '.css';
-
-if (file_exists($languageCss) && filesize($languageCss) > 0)
-{
-	$doc->addStyleSheetVersion($languageCss);
-}
-
-// Load custom.css
-$customCss = 'templates/' . $this->template . '/css/custom.css';
-
-if (file_exists($customCss) && filesize($customCss) > 0)
-{
-	$doc->addStyleSheetVersion($customCss);
-}
+// Load the template asset
+JHtml::_('asset.load', $doc->direction == 'rtl' ? 'template.isis.rtl' : 'template.isis.ltr');
 
 // Detecting Active Variables
 $option   = $input->get('option', '');
@@ -115,7 +94,7 @@ if ($stickyToolbar)
 	$stickyBar = 1;
 }
 
-$doc->addScriptDeclaration(
+JHtml::_('asset.scriptDeclaration',
 	"
 	window.isisStickyToolbar = $stickyBar;
 	window.isisOffsetTop = $offset;
