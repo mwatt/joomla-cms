@@ -93,6 +93,33 @@ class JApplicationWeb extends JApplicationBase
 	);
 
 	/**
+         * A map of HTTP Response headers which may only send a single value, all others
+         * are considered to allow multiple
+         * 
+         * @var    object
+         * @since  3.5.2
+         * @see    https://tools.ietf.org/html/rfc7230
+         */
+	private $singleValueResponseHeaders = array(
+		'status', // This is not a valid header name, but the representation used by Joomla to identify the HTTP Response Code
+		'Content-Length',
+		'Host',
+		'Content-Type',
+		'Content-Location',
+		'Date',
+		'Location',
+		'Retry-After',
+		'Server',
+		'Mime-Version',
+		'Last-Modified',
+		'ETag',
+		'Accept-Ranges',
+		'Content-Range',
+		'Age',
+		'Expires'
+	);
+
+	/**
 	 * Class constructor.
 	 *
 	 * @param   JInput                 $input   An optional argument to provide dependency injection for the application's
@@ -625,23 +652,36 @@ class JApplicationWeb extends JApplicationBase
 		$name = (string) $name;
 		$value = (string) $value;
 
-		// If the replace flag is set, unset all known headers with the given name.
-		if ($replace)
+		// Create an array of names to search for duplicates
+		$keys = false;
+		if ($this->response->headers)
 		{
+			$names = array();
 			foreach ($this->response->headers as $key => $header)
 			{
-				if ($name == $header['name'])
-				{
-					unset($this->response->headers[$key]);
-				}
+				$names[$key] = $header['name'];
 			}
+			// Find existing headers by name
+			$keys = array_keys($names, $name);
+		}
 
+		// Remove existing values if they exist and replace is true
+		if ($replace && $keys)
+		{
+			foreach ($keys as $key)
+			{
+				unset($this->response->headers[$key]);
+			}
 			// Clean up the array as unsetting nested arrays leaves some junk.
 			$this->response->headers = array_values($this->response->headers);
 		}
 
-		// Add the header to the internal array.
-		$this->response->headers[] = array('name' => $name, 'value' => $value);
+		// If no keys found, safe to insert
+		if (!$keys || ($keys && ($replace || !in_array($name, $this->singleValueResponseHeaders))))
+		{
+			// Add the header to the internal array.
+			$this->response->headers[] = array('name' => $name, 'value' => $value);
+		}
 
 		return $this;
 	}
@@ -650,8 +690,8 @@ class JApplicationWeb extends JApplicationBase
 	 * Method to get the array of response headers to be sent when the response is sent
 	 * to the client.
 	 *
-	 * @return  array
-	 *
+	 * @return  array	 *
+	 * 
 	 * @since   11.3
 	 */
 	public function getHeaders()
@@ -684,16 +724,29 @@ class JApplicationWeb extends JApplicationBase
 	{
 		if (!$this->checkHeadersSent())
 		{
+			// Creating an array of headers, making arrays of headers with multiple values
+			$headers = array();
 			foreach ($this->response->headers as $header)
 			{
-				if ('status' == strtolower($header['name']))
+				if (array_key_exists($header['name'], $headers))
 				{
-					// 'status' headers indicate an HTTP status, and need to be handled slightly differently
-					$this->header('HTTP/1.1 ' . $header['value'], null, (int) $header['value']);
+					$headers[$header['name']] = implode(', ', array($headers[$header['name']], $header['value']));
 				}
 				else
 				{
-					$this->header($header['name'] . ': ' . $header['value']);
+					$headers[$header['name']] = $header['value'];
+				}
+			}
+			foreach ($headers as $name => $value)
+			{
+				if ('status' == strtolower($name))
+				{
+					// 'status' headers indicate an HTTP status, and need to be handled slightly differently
+					$this->header('HTTP/1.1 ' . $value, null, (int) $value);
+				}
+				else
+				{
+					$this->header($name . ': ' . $value, true);
 				}
 			}
 		}
