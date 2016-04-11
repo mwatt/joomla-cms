@@ -11,6 +11,9 @@ defined('_JEXEC') or die;
 
 $app = JFactory::getApplication();
 
+// Output as HTML5
+JFactory::getDocument()->setHtml5(true);
+
 // Add JavaScript Frameworks
 JHtml::_('bootstrap.framework');
 
@@ -19,7 +22,7 @@ require_once JPATH_ADMINISTRATOR . '/components/com_users/helpers/users.php';
 $twofactormethods = UsersHelper::getTwoFactorMethods();
 ?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $this->language; ?>" lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
+<html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<jdoc:include type="head" />
@@ -28,6 +31,7 @@ $twofactormethods = UsersHelper::getTwoFactorMethods();
 		<link rel="stylesheet" href="<?php echo $this->baseurl; ?>/templates/system/css/offline_rtl.css" type="text/css" />
 	<?php endif; ?>
 	<link rel="stylesheet" href="<?php echo $this->baseurl; ?>/templates/system/css/general.css" type="text/css" />
+	<!--[if lt IE 9]><script src="<?php echo JUri::root(true); ?>/media/jui/js/html5.js"></script><![endif]-->
 </head>
 <body>
 <jdoc:include type="message" />

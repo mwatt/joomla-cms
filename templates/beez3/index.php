@@ -37,6 +37,9 @@ $bootstrap      = explode(',', $templateparams->get('bootstrap'));
 $jinput         = JFactory::getApplication()->input;
 $option         = $jinput->get('option', '', 'cmd');
 
+// Output as HTML5
+$doc->setHtml5(true);
+
 if (in_array($option, $bootstrap))
 {
 	// Load optional rtl Bootstrap css and Bootstrap bugfixes
@@ -44,11 +47,11 @@ if (in_array($option, $bootstrap))
 }
 
 $doc->addStyleSheet($this->baseurl . '/templates/system/css/system.css');
-$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/position.css', $type = 'text/css', $media = 'screen,projection');
-$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/layout.css', $type = 'text/css', $media = 'screen,projection');
+$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/position.css', $type = 'text/css', $media = 'screen');
+$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/layout.css', $type = 'text/css', $media = 'screen');
 $doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/print.css', $type = 'text/css', $media = 'print');
-$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/general.css', $type = 'text/css', $media = 'screen,projection');
-$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/' . htmlspecialchars($color) . '.css', $type = 'text/css', $media = 'screen,projection');
+$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/general.css', $type = 'text/css', $media = 'screen');
+$doc->addStyleSheet($this->baseurl . '/templates/' . $this->template . '/css/' . htmlspecialchars($color) . '.css', $type = 'text/css', $media = 'screen');
 
 if ($this->direction == 'rtl')
 {
@@ -72,23 +75,19 @@ if (file_exists($userCss) && filesize($userCss) > 0)
 {
 	$doc->addStyleSheetVersion('templates/' . $this->template . '/css/user.css');
 }
-
 ?>
-
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $this->language; ?>" lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>" >
+<html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>" >
 	<head>
 		<?php require __DIR__ . '/jsstrings.php';?>
-
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes"/>
 		<meta name="HandheldFriendly" content="true" />
 		<meta name="apple-mobile-web-app-capable" content="YES" />
-
 		<jdoc:include type="head" />
-
 		<!--[if IE 7]>
 		<link href="<?php echo $this->baseurl; ?>/templates/<?php echo $this->template; ?>/css/ie7only.css" rel="stylesheet" type="text/css" />
 		<![endif]-->
+		<!--[if lt IE 9]><script src="<?php echo JUri::root(true); ?>/media/jui/js/html5.js"></script><![endif]-->
 	</head>
 	<body id="shadow">
 		<?php if ($color == 'image'):?>
