@@ -86,7 +86,7 @@ class UsersModelDebuggroup extends JModelList
 	 *
 	 * @since   1.6
 	 */
-	protected function populateState($ordering = null, $direction = null)
+	protected function populateState($ordering = 'a.lft', $direction = 'asc')
 	{
 		$app = JFactory::getApplication('administrator');
 
@@ -125,7 +125,7 @@ class UsersModelDebuggroup extends JModelList
 		$this->setState('params', $params);
 
 		// List state information.
-		parent::populateState('a.lft', 'asc');
+		parent::populateState($ordering, $direction);
 	}
 
 	/**
