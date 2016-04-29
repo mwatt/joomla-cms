@@ -22,20 +22,74 @@ var JFormValidator = function() {
  	 	};
  	},
 
- 	findLabel = function(id, form){
- 	 	var $label, $form = jQuery(form);
- 	 	if (!id) {
- 	 	 	return false;
- 	 	}
- 	 	$label = $form.find('#' + id + '-lbl');
- 	 	if ($label.length) {
- 	 	 	return $label;
- 	 	}
- 	 	$label = $form.find('label[for="' + id + '"]');
- 	 	if ($label.length) {
- 	 	 	return $label;
- 	 	}
- 	 	return false;
+	refreshFormLabels = function(form, f)
+	{
+		// Iteration through DOM labels
+		var $lbl, $el, for_id, el_id;
+		var $lbls_hash = {};
+		jQuery('label').each(function()
+		{
+			$lbl = jQuery(this);
+			for_id = $lbl.attr('for');
+			if (for_id)
+			{
+				$lbls_hash[for_id] = $lbl;
+				//return;  // return will give minor performance improvement, but we don't use it to also index id-lbl
+			}
+
+			// Compatibility check ID-lbl as ID of label, it is better not to rely on this!, be compliant and specify "for="
+			var lbl_id = $lbl.attr('id');
+			if (lbl_id && lbl_id.indexOf('-lbl', lbl_id.length - 4) !== -1) {
+				$lbls_hash[lbl_id.slice(0, -4)] = $lbl;
+			}
+		});
+
+		// Set to zero length the .data('label') of elements without one
+		if (typeof f === 'undefined') f = form.elements;
+		var $empty = jQuery();
+		for(var i=0; i<f.length; i++)
+		{
+			$el = jQuery(f[i]);
+			if ( $el.data('label') === undefined )
+			{
+				el_id = $el.attr('id');
+				(el_id && $lbls_hash.hasOwnProperty(el_id)) ?
+					$el.data('label', $lbls_hash[el_id]) :
+					$el.data('label', $empty) ;
+			}
+		}
+	},
+
+ 	findLabel = function(id, form)
+ 	{
+		if (!id) return false;
+		
+ 	 	var $elem = jQuery('#'+id);
+  	var $label = $elem.data('label');
+  	
+		if ( !!$label ) ;  // $label && $label !== undefined
+		
+		else if (!id)
+			$elem.data('label', jQuery());
+  	
+   	// New element encountered (first run or / newly injected into the dom), redo iteration of DOM labels ... updating this and any other injected elements
+  	else
+  		refreshFormLabels(form, form.elements);
+    
+    $label = $elem.data('label');
+    
+		if ($label.length <= 0)
+		{
+			var $parentElem = $elem.parent();
+		  parentTagName = $parentElem.get(0).tagName.toLowerCase();
+		  
+			if(parentTagName == "label")
+			{
+				$label = $parentElem;
+				$elem.data('label', $label);
+			}
+		}
+		return $label.length ? $label : false;
  	},
 
  	handleResponse = function(state, $el) {
@@ -43,7 +97,6 @@ var JFormValidator = function() {
  	 	var $label = $el.data('label');
  	 	if ($label === undefined) {
  	 		$label = findLabel($el.attr('id'), $el.get(0).form);
- 	 		$el.data('label', $label);
  	 	}
 
  	 	// Set the element and its label (if exists) invalid state
@@ -106,8 +159,7 @@ var JFormValidator = function() {
  		// Validate form fields
  		fields = jQuery(form).find('input, textarea, select, fieldset');
  	 	for (i = 0, l = fields.length; i < l; i++) {
- 	 		// Ignore Rule/Filters/Assigned field for spead up validation
- 	 		// And other fields that has class="novalidate"
+ 	 		// Speed up validation by ignoring fields with 'novalidate' CSS class, such as Rule/Filters/Assigned fields
  	 		if(jQuery(fields[i]).hasClass('novalidate')) {
  	 			continue;
  	 		}
@@ -131,10 +183,14 @@ var JFormValidator = function() {
  	 	 		label = jQuery(invalid[i]).data("label");
  	 			if (label) {
  	 	 			error.error.push(message + label.text().replace("*", ""));
-                		}
+				}
  	 	 	}
  	 	 	Joomla.renderMessages(error);
  	 	}
+ 	 	
+		// Since validation was successful, remove any old messages, because on-submit handlers and / or HTML5 validation may follow
+ 	 	else if (valid) Joomla.removeMessages();
+ 	 	
  	 	return valid;
  	},
 

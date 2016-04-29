@@ -143,8 +143,13 @@
 			if(elem.form === undefined){
 				return null;
 			}
+
+			$elem = $(elem);
+			if ($elem.hasClass('novalidate')) {
+				return true;
+			}
+
 			var	self = elem.form.H5Form,
-				$elem = $(elem),
 				isMissing = false,
 				isRequired = !!($(elem).attr("required")),
 				isDisabled = !!($elem.attr("disabled"));
@@ -328,23 +333,81 @@
 					self.setFocusOn(elem);
 				});
 			}
-	    },
-	    //Extras
-	    findLabel : function($elem){
-	    	var $label = $('label[for="'+$elem.attr('id')+'"]');
+    },
 
-			if($label.length <= 0) {
-			    var $parentElem = $elem.parent(),
-			        parentTagName = $parentElem.get(0).tagName.toLowerCase();
+		//Extras
+		refreshFormLabels : function(form, f)
+		{
+			// Iteration through DOM labels updating 
+			var $lbl, $el, for_id, el_id;
+			var $lbls_hash = {};
+			jQuery('label').each(function()
+			{
+				$lbl = jQuery(this);
+				for_id = $lbl.attr('for');
+				if (for_id)
+				{
+					$lbls_hash[for_id] = $lbl;
+					//return;  // return will give minor performance improvement, but we don't use it to also index id-lbl
+				}
 
-			    if(parentTagName == "label") {
-			        $label = $parentElem;
-			    }
+				// Compatibility check ID-lbl as ID of label, it is better not to rely on this!, be compliant and specify "for="
+				var lbl_id = $lbl.attr('id');
+				if (lbl_id && lbl_id.indexOf('-lbl', lbl_id.length - 4) !== -1) {
+					$lbls_hash[lbl_id.slice(0, -4)] = $lbl;
+				}
+			});
+
+			// Set to zero length the .data('label') of elements without one
+			if (typeof f === 'undefined') f = form.elements;
+			var $empty = jQuery();
+			for(var i=0; i<f.length; i++)
+			{
+				$el = jQuery(f[i]);
+				if ( $el.data('label') === undefined )
+				{
+					el_id = $el.attr('id');
+					(el_id && $lbls_hash.hasOwnProperty(el_id)) ?
+						$el.data('label', $lbls_hash[el_id]) :
+						$el.data('label', $empty) ;
+				}
 			}
-			return $label;
-	    },
+		},
+	  
+    findLabel : function($elem)
+    {
+    	var self = this;
+    	var form = $elem.get(0).form;
+    	var id = $elem.attr('id');
+    	var $label = $elem.data('label');
+    	
+			if ( !!$label ) ; // $label && $label !== undefined
+			
+			else if (!id)
+				$elem.data('label', jQuery());
+			
+    	// New element encountered (first run or / newly injected into the dom), redo iteration of DOM labels ... updating this and any other injected elements
+    	else
+				self.refreshFormLabels(form, form.elements);
+	    
+			$label = $elem.data('label');
+	    
+			if ($label.length <= 0)
+			{
+				var $parentElem = $elem.parent();
+			  parentTagName = $parentElem.get(0).tagName.toLowerCase();
+			  
+				if(parentTagName == "label")
+				{
+					$label = $parentElem;
+					$elem.data('label', $label);
+				}
+			}
 
-	    setFocusOn : function(elem){
+			return $label;
+		},
+		
+		setFocusOn : function(elem){
 			if(elem.tagName.toLowerCase() === "fieldset"){
 				$(elem).find(":first").focus();
 			}
@@ -371,7 +434,7 @@
 			if(error.errors.length > 0){
 				Joomla.renderMessages(error);
 			}
-	    }
+		}
 	};
 	$.fn.h5f = function(options){
 		return this.each(function(){
