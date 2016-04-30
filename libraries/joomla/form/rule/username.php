@@ -10,6 +10,7 @@
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\Registry\Registry;
+use Joomla\String\StringHelper;
 
 /**
  * Form Rule class for the Joomla Platform.
@@ -19,7 +20,7 @@ use Joomla\Registry\Registry;
 class JFormRuleUsername extends JFormRule
 {
 	/**
-	 * Method to test the username for uniqueness.
+	 * Method to test the username for uniqueness, minimum size, maximum size, and character set compliant.
 	 *
 	 * @param   SimpleXMLElement  $element  The SimpleXMLElement object representing the `<field>` tag for the form field object.
 	 * @param   mixed             $value    The form field value to validate.
@@ -35,6 +36,10 @@ class JFormRuleUsername extends JFormRule
 	 */
 	public function test(SimpleXMLElement $element, $value, $group = null, Registry $input = null, JForm $form = null)
 	{
+		// Default value
+		$result = true;
+		$app    = JFactory::getApplication();
+
 		// Get the database object and a new query object.
 		$db = JFactory::getDbo();
 		$query = $db->getQuery(true);
@@ -57,6 +62,146 @@ class JFormRuleUsername extends JFormRule
 			return false;
 		}
 
-		return true;
+		// Get the config params for username
+		$params = JComponentHelper::getParams('com_users');
+
+		// CHECK MINIMUM CHARACTER'S NUMBER
+		// Get the number of characters in $username
+		$usernameLenght = StringHelper::strlen($value);
+
+		// Get the minimum number of characters
+		$minNumChars = $params->get('minimum_length_username');
+
+		// If is set minNumChars and $usernameLenght does't achieve minimum lenght
+		if (($minNumChars) && ($usernameLenght < $minNumChars))
+		{
+			$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_MINNUMCHARS_REQUIRED', $minNumChars, $usernameLenght), 'warning');
+			$result = false;
+		}
+
+		// CHECK MAXIMUM CHARACTER'S NUMBER
+		// Get the maximum number of characters
+		$maxNumChars = $params->get('maximum_length_username');
+
+		// If is set maxNumChars and $usernameLenght surpass maximum lenght
+		if (($maxNumChars) && ($usernameLenght > $maxNumChars))
+		{
+			$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_MAXNUMCHARS_REQUIRED', $maxNumChars, $usernameLenght), 'warning');
+			$result = false;
+		}
+
+		// CHECK IF USERNAME SPELLING IN ALLOWED CHARACTER SET
+		// Get preset option
+		$allowed_preset = $params->get('allowed_chars_username_preset');
+
+		if ($allowed_preset)
+		{
+			switch ($allowed_preset)
+			{
+				case 1: // CUSTOM ALLOWED
+				case 2: // CUSTOM FORBIDDEN
+					$customCharsUsername = array_unique(StringHelper::str_split($params->get('custom_chars_username')));
+
+					// Get the username
+					$uname = array_unique(StringHelper::str_split($value));
+
+					if ($allowed_preset == 1)
+					{
+						// Get the invalid chars for CUSTOM ALLOWED
+						$invalid_chars = array_diff($uname, $customCharsUsername);
+					}
+					else
+					{
+						// Get the invalid chars for CUSTOM FORBIDDEN
+						$invalid_chars = array_intersect($uname, $customCharsUsername);
+					}
+
+					// Check if all the $uname chars are valid chars
+					if (!empty($invalid_chars))
+					{
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_CHARSET_REQUIRED', implode(' ', $invalid_chars)), 'warning');
+						$result = false;
+					}
+					break;
+
+				case 3:
+					// CUSTOM IS REGEXP
+					// All that match is rejected
+					$regExp = (string) $params->get('custom_chars_username');
+
+					if (preg_match_all($regExp, $value, $nonRegExpChars))
+					{
+						$nonRegExpString = implode(' ', array_unique($nonRegExpChars[0]));
+
+						// Enqueue error message and return false
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_CHARSET_REQUIRED', $nonRegExpString), 'warning');
+
+						$result = false;
+					}
+					break;
+				case 4:
+					// ALPHANUMERIC ONLY
+					// @TODO: with regExp
+					if (!ctype_alnum($value))
+					{
+						// Enqueue error message and return false
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_ALPHANUMERIC_REQUIRED'), 'warning');
+
+						$result = false;
+					}
+					break;
+
+				case 5:
+					// LATIN ONLY
+					if (preg_match_all('/[^\\p{Common}\\p{Latin}]/u', $value, $nonLatinChars))
+					{
+						$nonLatinString = implode(' ', array_unique($nonLatinChars[0]));
+
+						// Enqueue error message and return false
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_LATIN_REQUIRED', $nonLatinString), 'warning');
+
+						$result = false;
+					}
+					break;
+
+				case 6:
+					// M3AAWG HIGHLY RESTRICTIVE DEFINITION FOR EAST ASIAN LANGUAGES
+					// https://www.m3aawg.org/sites/default/files/m3aawg-unicode-tutorial-2016-02.pdf
+					$nonLatinHanHiraganaKatakana = preg_match_all('/[^\\p{Common}\\p{Latin}\\p{Han}\\p{Hiragana}\\p{Katakana}]/u', $value);
+					$nonLatinHanBopomofo = preg_match_all('/[^\\p{Common}\\p{Latin}\\p{Han}\\p{Bopomofo}]/u', $value);
+					$nonLatinHanHangul = preg_match_all('/[^\\p{Common}\\p{Latin}\\p{Han}\\p{Hangul}]/u', $value);
+
+					// If none of the allowed combinations by M3AAWG, then reject
+					if ($nonLatinHanHiraganaKatakana && $nonLatinHanBopomofo && $nonLatinHanHangul)
+					{
+						// Enqueue error message and return false
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_M3AAWG_REQUIRED'), 'warning');
+
+						$result = false;
+					}
+					break;
+
+				case 7:
+					// EMAIL
+					jimport('joomla.mail.helper');
+
+					if (!JMailHelper::isEmailAddress($value) )
+					{
+						// Enqueue error message and return false
+						$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_EMAIL_REQUIRED', implode(' ', $invalid_chars)), 'warning');
+
+						$result = false;
+					}
+					break;
+
+				default:
+					// NO OPTION
+					$app->enqueueMessage(JText::sprintf('COM_USERS_CONFIG_FIELD_USERNAME_NOOPTION'), 'warning');
+
+					return false;
+			}
+		}
+
+		return $result;
 	}
 }
