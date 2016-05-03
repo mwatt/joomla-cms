@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `#__finder_links` (
   `md5sum` varchar(32) default NULL,
   `published` tinyint(1) NOT NULL default '1',
   `state` int(5) default '1',
-  `access` int(5) default '0',
+  `access` int(10) unsigned NOT NULL default '0',
   `language` varchar(8) NOT NULL,
   `publish_start_date` datetime NOT NULL default '0000-00-00 00:00:00',
   `publish_end_date` datetime NOT NULL default '0000-00-00 00:00:00',
