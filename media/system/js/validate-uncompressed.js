@@ -22,20 +22,68 @@ var JFormValidator = function() {
  	 	};
  	},
 
- 	findLabel = function(id, form){
- 	 	var $label, $form = jQuery(form);
- 	 	if (!id) {
- 	 	 	return false;
- 	 	}
- 	 	$label = $form.find('#' + id + '-lbl');
- 	 	if ($label.length) {
- 	 	 	return $label;
- 	 	}
- 	 	$label = $form.find('label[for="' + id + '"]');
- 	 	if ($label.length) {
- 	 	 	return $label;
- 	 	}
- 	 	return false;
+	refreshFormLabels = function(form)
+	{
+		// Iteration through DOM labels
+		var $lbl, $el, for_id, el_id;
+		var $lbls_hash = {};
+		jQuery('label').each(function()
+		{
+			$lbl = jQuery(this);
+			for_id = $lbl.attr('for');
+			if (for_id)
+			{
+				$lbls_hash[for_id] = $lbl;
+			}
+
+			// Also check ID-lbl as ID of label, needed for fieldset class="radio/checkbox"
+			// for other cases it is better not to rely on this, be compliant and specify ' for="..." '
+			var lbl_id = $lbl.attr('id');
+			if (lbl_id && lbl_id.indexOf('-lbl', lbl_id.length - 4) !== -1) {
+				$lbls_hash[lbl_id.slice(0, -4)] = $lbl;
+			}
+		});
+
+		// Set to zero length the .data('label') of elements without one
+		var f = jQuery(form).find('fieldset').toArray().concat(Array.from(form.elements));
+
+		for(var i=0; i<f.length; i++)
+		{
+			$el = jQuery(f[i]);
+			if ( $el.data('label') === undefined )
+			{
+				el_id = $el.attr('id');
+				(el_id && $lbls_hash.hasOwnProperty(el_id)) ?
+					$el.data('label', $lbls_hash[el_id]) :
+					$el.data('label', false) ;
+			}
+		}
+	},
+
+ 	findLabel = function(id, form)
+ 	{
+		if (!id) return false;
+		
+ 	 	var $elem = jQuery('#'+id);
+  	var $label = $elem.data('label');
+  	
+		if ( !!$label ) ;  // $label && $label !== undefined
+		
+		else if (!id)
+			$elem.data('label', false);
+  	
+   	// New element encountered (first run or / newly injected into the dom), redo iteration of DOM labels ... updating this and any other injected elements
+  	else
+  		refreshFormLabels(form);
+
+    // Before returning label checking if it is set, (refreshFormLabels() should have set it, but check anyway)
+    $label = $elem.data('label');
+		if ($label === undefined)
+		{
+			$label = false;
+			$elem.data('label', $label);
+		}
+		return $label;
  	},
 
  	handleResponse = function(state, $el) {
@@ -43,7 +91,6 @@ var JFormValidator = function() {
  	 	var $label = $el.data('label');
  	 	if ($label === undefined) {
  	 		$label = findLabel($el.attr('id'), $el.get(0).form);
- 	 		$el.data('label', $label);
  	 	}
 
  	 	// Set the element and its label (if exists) invalid state
@@ -103,12 +150,18 @@ var JFormValidator = function() {
  	isValid = function(form) {
  		var fields, valid = true, message, error, label, invalid = [], i, l;
 
+		// Remove any inline error messages (in case they were added by a previous validation)
+		jQuery('.invalid_jfield_message').remove();
+
  		// Validate form fields
- 		fields = jQuery(form).find('input, textarea, select, fieldset');
+ 		//fields = jQuery(form).find('input, textarea, select, fieldset');
+ 		fields = jQuery(form).find('fieldset').toArray().concat(Array.from(form.elements));
+ 		
  	 	for (i = 0, l = fields.length; i < l; i++) {
- 	 		// Ignore Rule/Filters/Assigned field for spead up validation
- 	 		// And other fields that has class="novalidate"
- 	 		if(jQuery(fields[i]).hasClass('novalidate')) {
+ 	 		// Speed up validation by ignoring fields with 'novalidate' CSS class, such as Rule/Filters/Assigned fields
+			var $el = jQuery(fields[i]),
+				tagName = $el.prop("tagName").toLowerCase();
+			if ( $el.hasClass('novalidate') || tagName=='button' ) {
  	 			continue;
  	 		}
  	 	 	if (validate(fields[i]) === false) {
@@ -131,10 +184,18 @@ var JFormValidator = function() {
  	 	 		label = jQuery(invalid[i]).data("label");
  	 			if (label) {
  	 	 			error.error.push(message + label.text().replace("*", ""));
-                		}
+				}
+				// Fallback to adding an inline message, if label was not found
+				else {
+					jQuery('<span class="alert alert-error invalid_jfield_message" style="display:inline-block; margin: 2px 12px;">' + message + '</span>').insertAfter( jQuery(invalid[i]) );
+				}
  	 	 	}
  	 	 	Joomla.renderMessages(error);
  	 	}
+ 	 	
+		// Since validation was successful, remove any old messages, because on-submit handlers and / or HTML5 validation may follow
+ 	 	else if (valid) Joomla.removeMessages();
+ 	 	
  	 	return valid;
  	},
 
@@ -142,7 +203,9 @@ var JFormValidator = function() {
  	 	var inputFields = [], elements,
  	 		$form = jQuery(form);
  	 	// Iterate through the form object and attach the validate method to all input fields.
- 	 	elements = $form.find('input, textarea, select, fieldset, button');
+ 	 	//elements = $form.find('input, textarea, select, fieldset, button');
+ 	 	elements = $form.find('fieldset').toArray().concat(Array.from(form.elements));
+		
  	 	for (var i = 0, l = elements.length; i < l; i++) {
  	 	 	var $el = jQuery(elements[i]), tagName = $el.prop("tagName").toLowerCase();
  	 	 	// Attach isValid method to submit button
