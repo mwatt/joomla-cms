@@ -22,7 +22,7 @@ var JFormValidator = function() {
  	 	};
  	},
 
-	refreshFormLabels = function(form, f)
+	refreshFormLabels = function(form)
 	{
 		// Iteration through DOM labels
 		var $lbl, $el, for_id, el_id;
@@ -45,7 +45,7 @@ var JFormValidator = function() {
 		});
 
 		// Set to zero length the .data('label') of elements without one
-		if (typeof f === 'undefined') f = form.elements;
+		var f = jQuery(form).find('fieldset').toArray().concat(Array.from(form.elements));
 
 		for(var i=0; i<f.length; i++)
 		{
@@ -74,7 +74,7 @@ var JFormValidator = function() {
   	
    	// New element encountered (first run or / newly injected into the dom), redo iteration of DOM labels ... updating this and any other injected elements
   	else
-  		refreshFormLabels(form, form.elements);
+  		refreshFormLabels(form);
 
     // Before returning label checking if it is set, (refreshFormLabels() should have set it, but check anyway)
     $label = $elem.data('label');
@@ -154,10 +154,14 @@ var JFormValidator = function() {
 		jQuery('.invalid_jfield_message').remove();
 
  		// Validate form fields
- 		fields = jQuery(form).find('input, textarea, select, fieldset');
+ 		//fields = jQuery(form).find('input, textarea, select, fieldset');
+ 		fields = jQuery(form).find('fieldset').toArray().concat(Array.from(form.elements));
+ 		
  	 	for (i = 0, l = fields.length; i < l; i++) {
  	 		// Speed up validation by ignoring fields with 'novalidate' CSS class, such as Rule/Filters/Assigned fields
- 	 		if(jQuery(fields[i]).hasClass('novalidate')) {
+			var $el = jQuery(fields[i]),
+				tagName = $el.prop("tagName").toLowerCase();
+			if ( $el.hasClass('novalidate') || tagName=='button' ) {
  	 			continue;
  	 		}
  	 	 	if (validate(fields[i]) === false) {
@@ -199,7 +203,9 @@ var JFormValidator = function() {
  	 	var inputFields = [], elements,
  	 		$form = jQuery(form);
  	 	// Iterate through the form object and attach the validate method to all input fields.
- 	 	elements = $form.find('input, textarea, select, fieldset, button');
+ 	 	//elements = $form.find('input, textarea, select, fieldset, button');
+ 	 	elements = $form.find('fieldset').toArray().concat(Array.from(form.elements));
+		
  	 	for (var i = 0, l = elements.length; i < l; i++) {
  	 	 	var $el = jQuery(elements[i]), tagName = $el.prop("tagName").toLowerCase();
  	 	 	// Attach isValid method to submit button
