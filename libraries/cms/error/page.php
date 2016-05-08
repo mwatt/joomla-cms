@@ -35,6 +35,29 @@ class JErrorPage
 		{
 			try
 			{
+				// Try to log the error, but don't let the logging cause a fatal error
+				try
+				{
+					JLog::add(
+						sprintf(
+							'Uncaught %1$s of type %2$s thrown. Stack trace: %3$s',
+							$expectedClass,
+							get_class($error),
+							$error->getTraceAsString()
+						),
+						JLog::CRITICAL,
+						'error'
+					);
+				}
+				catch (Throwable $e)
+				{
+					// Logging failed, don't make a stink about it though
+				}
+				catch (Exception $e)
+				{
+					// Logging failed, don't make a stink about it though
+				}
+
 				$app      = JFactory::getApplication();
 				$document = JDocument::getInstance('error');
 
