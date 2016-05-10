@@ -44,12 +44,36 @@ class JFormFieldPassword extends JFormField
 	protected $maxLength;
 
 	/**
+	 * The allowable minlength of password.
+	 *
+	 * @var    integer
+	 * @since  3.6
+	 */
+	protected $minLength;
+
+	/**
+	 * The linked username field.
+	 *
+	 * @var    string
+	 * @since  3.6
+	 */
+	protected $username;
+
+	/**
 	 * Whether to attach a password strength meter or not.
 	 *
 	 * @var    boolean
 	 * @since  3.2
 	 */
 	protected $meter = false;
+
+	/**
+	 * Name of the layout being used to render the field
+	 *
+	 * @var    string
+	 * @since  3.6
+	 */
+	protected $layout = 'joomla.form.field.password';
 
 	/**
 	 * Method to get certain otherwise inaccessible properties from the form field object.
@@ -67,6 +91,8 @@ class JFormFieldPassword extends JFormField
 			case 'threshold':
 			case 'maxLength':
 			case 'meter':
+			case 'username':
+			case 'minlength':
 				return $this->$name;
 		}
 
@@ -91,6 +117,7 @@ class JFormFieldPassword extends JFormField
 		{
 			case 'maxLength':
 			case 'threshold':
+			case 'username':
 				$this->$name = $value;
 				break;
 
@@ -125,9 +152,8 @@ class JFormFieldPassword extends JFormField
 		{
 			$this->maxLength = $this->element['maxlength'] ? (int) $this->element['maxlength'] : 99;
 			$this->threshold = $this->element['threshold'] ? (int) $this->element['threshold'] : 66;
-
-			$meter       = (string) $this->element['strengthmeter'];
-			$this->meter = ($meter == 'true' || $meter == 'on' || $meter == '1');
+			$meter           = (string) $this->element['strengthmeter'];
+			$this->meter     = ($meter == 'true' || $meter == 'on' || $meter == '1');
 		}
 
 		return $return;
@@ -142,44 +168,38 @@ class JFormFieldPassword extends JFormField
 	 */
 	protected function getInput()
 	{
-		// Translate placeholder text
-		$hint = $this->translateHint ? JText::_($this->hint) : $this->hint;
+		// Trim the trailing line in the layout file
+		return $this->getRenderer($this->layout)->render($this->getLayoutData());
+	}
 
-		// Initialize some field attributes.
-		$size         = !empty($this->size) ? ' size="' . $this->size . '"' : '';
-		$maxLength    = !empty($this->maxLength) ? ' maxlength="' . $this->maxLength . '"' : '';
-		$class        = !empty($this->class) ? ' class="' . $this->class . '"' : '';
-		$readonly     = $this->readonly ? ' readonly' : '';
-		$disabled     = $this->disabled ? ' disabled' : '';
-		$required     = $this->required ? ' required aria-required="true"' : '';
-		$hint         = $hint ? ' placeholder="' . $hint . '"' : '';
-		$autocomplete = !$this->autocomplete ? ' autocomplete="off"' : '';
-		$autofocus    = $this->autofocus ? ' autofocus' : '';
+	/**
+	 * Method to get the data to be passed to the layout for rendering.
+	 *
+	 * @return  array
+	 *
+	 * @since 3.6
+	 */
+	protected function getLayoutData()
+	{
+		$data = parent::getLayoutData();
 
-		if ($this->meter)
+		if (!$this->minLength)
 		{
-			JHtml::_('script', 'system/passwordstrength.js', true, true);
-			$script = 'new Form.PasswordStrength("' . $this->id . '",
-				{
-					threshold: ' . $this->threshold . ',
-					onUpdate: function(element, strength, threshold) {
-						element.set("data-passwordstrength", strength);
-					}
-				}
-			);';
-
-			// Load script on document load.
-			JFactory::getDocument()->addScriptDeclaration(
-				"jQuery(document).ready(function(){" . $script . "});"
-			);
+			$this->minLength = (int) JComponentHelper::getParams('com_users')->get('minimum_length', 4);
 		}
 
-		// Including fallback code for HTML5 non supported browsers.
-		JHtml::_('jquery.framework');
-		JHtml::_('script', 'system/html5fallback.js', false, true);
+		// Initialize some field attributes.
+		$username     = $this->element['username'] ? 'options.common.usernameField = "#' .
+			$this->formControl . '_' . $this->element['username'] . '";' : '';
 
-		return '<input type="password" name="' . $this->name . '" id="' . $this->id . '"' .
-			' value="' . htmlspecialchars($this->value, ENT_COMPAT, 'UTF-8') . '"' . $hint . $autocomplete .
-			$class . $readonly . $disabled . $size . $maxLength . $required . $autofocus . ' />';
+		$extraData = array(
+			'maxLength'  => $this->maxLength,
+			'multiple'   => $this->multiple,
+			'username'   => $username,
+			'minLength'  => $this->minLength,
+			'meter'      => $this->meter,
+		);
+
+		return array_merge($data, $extraData);
 	}
 }
