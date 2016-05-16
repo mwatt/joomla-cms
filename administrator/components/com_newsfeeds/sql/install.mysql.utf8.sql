@@ -1,6 +1,6 @@
 CREATE TABLE `#__newsfeeds` (
-  `catid` integer NOT NULL default '0',
-  `id` integer(10) UNSIGNED NOT NULL auto_increment,
+  `catid` int(11) UNSIGNED NOT NULL default '0',
+  `id` int(10) UNSIGNED NOT NULL auto_increment,
   `name`  varchar(100) NOT NULL DEFAULT '',
   `alias` varchar(100) NOT NULL default '',
   `link` varchar(200) NOT NULL DEFAULT '',
@@ -12,7 +12,7 @@ CREATE TABLE `#__newsfeeds` (
   `checked_out_time` datetime NOT NULL default '0000-00-00 00:00:00',
   `ordering` integer NOT NULL default '0',
   `rtl` tinyint(4) NOT NULL default '0',
-  `access` tinyint UNSIGNED NOT NULL DEFAULT '0',
+  `access` int(10) UNSIGNED NOT NULL DEFAULT '0',
   `language` char(7) NOT NULL DEFAULT '',
   `params` text NOT NULL,
   `created` datetime NOT NULL default '0000-00-00 00:00:00',
