@@ -698,6 +698,19 @@ class JDatabaseDriverPostgresql extends JDatabaseDriver
 		// If an error occurred handle it.
 		if (!$this->cursor)
 		{
+			// Get the error number and message.
+			$this->errorNum = (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
+			$errorMessage   = (string) pg_last_error($this->connection);
+
+			// Replace the Databaseprefix with `#__` if we are not in Debug
+			if (!$this->debug)
+			{
+				$query        = str_replace($this->tablePrefix, '#__', $query);
+				$errorMessage = str_replace($this->tablePrefix, '#__', $errorMessage);
+			}
+
+			$this->errorMsg = $errorMessage . "SQL=" . $query;
+
 			// Check if the server was disconnected.
 			if (!$this->connected())
 			{
@@ -710,10 +723,6 @@ class JDatabaseDriverPostgresql extends JDatabaseDriver
 				// If connect fails, ignore that exception and throw the normal exception.
 				catch (RuntimeException $e)
 				{
-					// Get the error number and message.
-					$this->errorNum = (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
-					$this->errorMsg = pg_last_error($this->connection) . "SQL=" . $query;
-
 					// Throw the normal query exception.
 					JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'database-error');
 
@@ -726,10 +735,6 @@ class JDatabaseDriverPostgresql extends JDatabaseDriver
 			// The server was not disconnected.
 			else
 			{
-				// Get the error number and message.
-				$this->errorNum = (int) pg_result_error_field($this->cursor, PGSQL_DIAG_SQLSTATE) . ' ';
-				$this->errorMsg = pg_last_error($this->connection) . "SQL=" . $query;
-
 				// Throw the normal query exception.
 				JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'database-error');
 

@@ -582,7 +582,16 @@ class JDatabaseDriverMysqli extends JDatabaseDriver
 		if (!$this->cursor)
 		{
 			$this->errorNum = (int) mysqli_errno($this->connection);
-			$this->errorMsg = (string) mysqli_error($this->connection) . ' SQL=' . $query;
+			$errorMessage   = (string) mysqli_error($this->connection);
+
+			// Replace the Databaseprefix with `#__` if we are not in Debug
+			if (!$this->debug)
+			{
+				$query        = str_replace($this->tablePrefix, '#__', $query);
+				$errorMessage = str_replace($this->tablePrefix, '#__', $errorMessage);
+			}
+
+			$this->errorMsg = $errorMessage . ' SQL=' . $query;
 
 			// Check if the server was disconnected.
 			if (!$this->connected())
